@@ -753,8 +753,21 @@
         import { getFirestore, collection, doc, addDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         /* ==========================================
-           A. Firebase 初期設定 / モード判定 (Rule 1 & Rule 3 準拠)
-           ========================================== */
+           【最重要】Firebaseに繋いで誰でも見れるようにするための設定
+           ==========================================
+           1. Firebaseコンソール (https://console.firebase.google.com/) でプロジェクトを作成します。
+           2. 「Firestore Database」と「Authentication (匿名認証)」を有効化します。
+           3. Webアプリを追加し、表示された「firebaseConfig」を以下のオブジェクトに上書きしてください。
+           ------------------------------------------ */
+        const userFirebaseConfig = {
+            apiKey: "",            // ← ここにコピペして上書きすると、ネットで全員に日記が公開されます！🐾
+            authDomain: "",
+            projectId: "",
+            storageBucket: "",
+            messagingSenderId: "",
+            appId: ""
+        };
+
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'ferret-diary-app';
         let firebaseEnabled = false;
         let db = null;
@@ -762,23 +775,14 @@
         let currentUser = null;
 
         // Firebaseが利用可能な有効な設定があるか検証
-        let firebaseConfig = null;
-        if (typeof __firebase_config !== 'undefined') {
-            try {
-                firebaseConfig = JSON.parse(__firebase_config);
-                // API Keyが空文字でないか、かつダミーでないかチェック
-                if (firebaseConfig && firebaseConfig.apiKey && firebaseConfig.apiKey !== "") {
-                    firebaseEnabled = true;
-                }
-            } catch (e) {
-                console.warn("Firebase config parse failed, falling back to LocalStorage.");
-            }
+        if (userFirebaseConfig && userFirebaseConfig.apiKey && userFirebaseConfig.apiKey !== "") {
+            firebaseEnabled = true;
         }
 
         // Firebaseのセットアップ
         if (firebaseEnabled) {
             try {
-                const app = initializeApp(firebaseConfig);
+                const app = initializeApp(userFirebaseConfig);
                 auth = getAuth(app);
                 db = getFirestore(app);
 
@@ -1594,7 +1598,7 @@
         /* ==========================================
            E. 写真付き日記機能 (クラウド / ローカルストレージ 自動ハイブリッド対応)
            ========================================== */
-        // 画像プレビューの読み込み
+        // 【超重要】画像選択および自動縮小（圧縮）処理
         function previewImage(event) {
             const file = event.target.files[0];
             const preview = document.getElementById('imagePreview');
@@ -1604,9 +1608,32 @@
                 fileStatus.textContent = file.name;
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    currentImageData = e.target.result;
-                    preview.src = currentImageData;
-                    preview.style.display = 'inline-block';
+                    const img = new Image();
+                    img.onload = function() {
+                        // Canvasを使って大きなスマホ写真を最大横幅800pxに自動縮小する
+                        const canvas = document.createElement('canvas');
+                        const max_width = 800;
+                        let width = img.width;
+                        let height = img.height;
+
+                        if (width > max_width) {
+                            height = Math.round((height * max_width) / width);
+                            width = max_width;
+                        }
+
+                        canvas.width = width;
+                        canvas.height = height;
+
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+
+                        // JPEG形式に変換して、画質品質を60%に抑え「超軽量（数十KB）」にする
+                        currentImageData = canvas.toDataURL('image/jpeg', 0.6);
+                        
+                        preview.src = currentImageData;
+                        preview.style.display = 'inline-block';
+                    };
+                    img.src = e.target.result;
                 }
                 reader.readAsDataURL(file);
             } else {

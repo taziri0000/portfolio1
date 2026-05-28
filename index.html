@@ -1,0 +1,1801 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>フェレット日記 | 3D Memories & Portfolio</title>
+    <!-- Google Fonts（かわいい手書き・丸ゴシック風フォント） -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Kiwi+Maru:wght@400;500;700&family=Yusei+Magic&display=swap" rel="stylesheet">
+    <!-- FontAwesome (アイコン用) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Three.js (3D描画用ライブラリ) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <style>
+        /* ==========================================
+           1. 全体のセットアップ & レスポンシブ変数
+           ========================================== */
+        :root {
+            --bg-color: #fbf7f0;
+            --main-brown: #5d4037;
+            --accent-brown: #7f5539;
+            --light-brown: #e6ccb2;
+            --pastel-pink: #ffb5a7;
+            --pastel-purple: #ddbdf6;
+            --card-bg: #ffffff;
+            --border-color: #ede0d4;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Kiwi Maru', serif;
+            background-color: var(--bg-color);
+            color: var(--main-brown);
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        /* スムーズスクロール */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* スクロールで出現する要素の初期状態 */
+        .fade-in-section {
+            opacity: 0;
+            transform: translateY(40px);
+            transition: opacity 1s ease-out, transform 1s ease-out;
+        }
+
+        /* 画面内に入ったらクラス付与 */
+        .fade-in-section.is-visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* ==========================================
+           2. ヘッダー / ヒーローエリア
+           ========================================== */
+        header {
+            background: linear-gradient(135deg, #fcd5ce 0%, #e6ccb2 100%);
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 20px;
+            position: relative;
+        }
+
+        header h1 {
+            font-family: 'Yusei Magic', sans-serif;
+            font-size: 3.5rem;
+            margin-bottom: 15px;
+            letter-spacing: 4px;
+            text-shadow: 2px 2px 0px rgba(255,255,255,0.8);
+            animation: float 3s ease-in-out infinite;
+        }
+
+        header p {
+            font-size: 1.25rem;
+            max-width: 600px;
+            margin-bottom: 30px;
+        }
+
+        .scroll-down {
+            position: absolute;
+            bottom: 30px;
+            font-size: 2.5rem;
+            animation: bounce 2s infinite;
+            color: var(--main-brown);
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        /* ==========================================
+           3. Three.js 思い出の空間セクション
+           ========================================== */
+        #memories-section {
+            padding: 80px 20px;
+            background-color: #f5ebe0;
+            text-align: center;
+            position: relative;
+        }
+
+        #memories-section h2 {
+            font-size: 2rem;
+            margin-bottom: 15px;
+            position: relative;
+            display: inline-block;
+        }
+
+        #memories-section h2::after {
+            content: '🐾';
+            position: absolute;
+            right: -35px;
+            top: 0;
+        }
+
+        .3d-intro {
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            color: #7f5539;
+        }
+
+        .3d-instructions {
+            font-size: 0.95rem;
+            color: #8c6a5c;
+            margin-bottom: 25px;
+            background-color: #fff9f5;
+            display: inline-block;
+            padding: 10px 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+        }
+
+        /* 3Dキャンバスの枠 */
+        .canvas-container {
+            width: 100%;
+            max-width: 1000px;
+            height: 550px;
+            margin: 0 auto;
+            border-radius: 30px;
+            overflow: hidden;
+            box-shadow: 0 15px 35px rgba(93, 64, 55, 0.15);
+            position: relative;
+            background-color: #fdf6ee; 
+        }
+
+        #three-canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        /* 3Dコントロールパネル */
+        .controls-panel {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.9);
+            padding: 10px 20px;
+            border-radius: 30px;
+            display: flex;
+            gap: 15px;
+            backdrop-filter: blur(5px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            z-index: 10;
+        }
+
+        /* 一人称操作用のバーチャルコントローラー（スマホ対応） */
+        .dpad-container {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.85);
+            padding: 12px;
+            border-radius: 50%;
+            display: grid;
+            grid-template-areas: 
+                ". up ."
+                "left . right"
+                ". down .";
+            gap: 6px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+            z-index: 10;
+            width: 110px;
+            height: 110px;
+            backdrop-filter: blur(5px);
+        }
+
+        .dpad-btn {
+            background-color: var(--accent-brown);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 0.9rem;
+            user-select: none;
+            transition: background-color 0.1s;
+        }
+
+        .dpad-btn:active {
+            background-color: var(--main-brown);
+        }
+
+        .dpad-up { grid-area: up; justify-self: center; }
+        .dpad-down { grid-area: down; justify-self: center; }
+        .dpad-left { grid-area: left; align-self: center; }
+        .dpad-right { grid-area: right; align-self: center; }
+
+        .control-btn {
+            background-color: var(--accent-brown);
+            color: #fff;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-family: inherit;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .control-btn:hover {
+            background-color: var(--main-brown);
+            transform: scale(1.05);
+        }
+
+        /* ==========================================
+           4. 日記・ブログ＆入力エリア (レスポンシブ)
+           ========================================== */
+        #diary-section {
+            padding: 80px 20px;
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .diary-layout {
+            display: grid;
+            grid-template-columns: 1fr 1.2fr;
+            gap: 50px;
+            align-items: start;
+        }
+
+        /* 入力フォームのスタイル */
+        .diary-form {
+            background: var(--card-bg);
+            padding: 35px;
+            border-radius: 25px;
+            box-shadow: 0 10px 25px rgba(93, 64, 55, 0.05);
+            border: 2px solid var(--border-color);
+        }
+
+        .diary-form h2 {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            border-bottom: 2px dashed var(--light-brown);
+            padding-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+        }
+
+        input[type="text"], textarea {
+            width: 100%;
+            padding: 14px;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            font-family: inherit;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.3s;
+            background-color: #fffcf9;
+        }
+
+        input[type="text"]:focus, textarea:focus {
+            border-color: var(--accent-brown);
+        }
+
+        textarea {
+            height: 150px;
+            resize: vertical;
+        }
+
+        /* カスタムファイルアップローダー */
+        .file-upload {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .file-upload-label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 15px;
+            background-color: #f7ebe1;
+            border: 2px dashed #b18567;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            font-weight: bold;
+        }
+
+        .file-upload-label:hover {
+            background-color: #ede0d4;
+        }
+
+        .file-upload input[type="file"] {
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        /* プレビュー */
+        .preview-container {
+            text-align: center;
+            margin-top: 15px;
+        }
+
+        .preview-img {
+            max-width: 100%;
+            max-height: 220px;
+            border-radius: 12px;
+            display: none;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .submit-btn {
+            background-color: var(--accent-brown);
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 1.1rem;
+            font-weight: bold;
+            width: 100%;
+            transition: all 0.3s;
+            box-shadow: 0 6px 12px rgba(93, 64, 55, 0.15);
+            margin-top: 10px;
+        }
+
+        .submit-btn:hover {
+            background-color: var(--main-brown);
+            transform: translateY(-2px);
+        }
+
+        /* 日記リストのスタイル */
+        .diary-list-container {
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+
+        .diary-list-container h2 {
+            font-size: 1.75rem;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        #diaryContainer {
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+
+        .diary-card {
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: 20px;
+            box-shadow: 0 8px 20px rgba(93, 64, 55, 0.04);
+            border-left: 8px solid var(--pastel-purple);
+            position: relative;
+            transition: transform 0.3s;
+        }
+
+        .diary-card:hover {
+            transform: translateY(-3px);
+        }
+
+        .diary-date {
+            font-size: 0.9rem;
+            color: #a3a3a3;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .diary-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+
+        .diary-image {
+            max-width: 100%;
+            max-height: 400px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .diary-content {
+            font-size: 1.05rem;
+            line-height: 1.7;
+            white-space: pre-wrap;
+        }
+
+        .delete-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: var(--pastel-pink);
+            color: var(--main-brown);
+            border: none;
+            padding: 6px 12px;
+            border-radius: 15px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .delete-btn:hover {
+            background-color: #ffcad4;
+        }
+
+        /* ==========================================
+           5. アニメーションキーフレーム & フッター
+           ========================================== */
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            60% { transform: translateY(-5px); }
+        }
+
+        footer {
+            background-color: var(--main-brown);
+            color: #fffcf9;
+            text-align: center;
+            padding: 40px 20px;
+            margin-top: 60px;
+            width: 100%;
+        }
+
+        footer p {
+            margin-bottom: 10px;
+        }
+
+        /* ==========================================
+           6. カスタムモーダル (標準アラート＆ダイアログ非推奨対応)
+           ========================================== */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(93, 64, 55, 0.4);
+            z-index: 10000;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(4px);
+        }
+
+        .modal-box {
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 25px;
+            max-width: 420px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 15px 30px rgba(93, 64, 55, 0.15);
+            border: 3px solid var(--light-brown);
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .modal-box p {
+            font-size: 1.1rem;
+            margin-bottom: 25px;
+            white-space: pre-wrap;
+            color: var(--main-brown);
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        .modal-btn {
+            background-color: var(--accent-brown);
+            color: white;
+            border: none;
+            padding: 10px 25px;
+            border-radius: 20px;
+            font-family: inherit;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: bold;
+        }
+
+        .modal-btn:hover {
+            background-color: var(--main-brown);
+        }
+
+        .modal-btn-cancel {
+            background-color: #ccd5ae;
+            color: var(--main-brown);
+        }
+
+        .modal-btn-cancel:hover {
+            background-color: #e2ecc8;
+        }
+
+        /* ==========================================
+           7. メディアクエリ（レスポンシブ対応）
+           ========================================== */
+        @media (max-width: 992px) {
+            .diary-layout {
+                grid-template-columns: 1fr; /* スマホ・タブレットは1カラム */
+                gap: 40px;
+            }
+
+            header h1 {
+                font-size: 2.8rem;
+            }
+
+            .canvas-container {
+                height: 480px; 
+            }
+        }
+
+        @media (max-width: 600px) {
+            header h1 {
+                font-size: 2.2rem;
+            }
+
+            .canvas-container {
+                height: 400px; /* スマホ用に最適化 */
+            }
+
+            .controls-panel {
+                width: auto;
+                justify-content: center;
+                font-size: 0.8rem;
+                padding: 6px 12px;
+                bottom: 15px;
+                gap: 8px;
+            }
+
+            .control-btn {
+                padding: 6px 10px;
+                font-size: 0.75rem;
+            }
+
+            .dpad-container {
+                bottom: 15px;
+                left: 15px;
+                width: 90px;
+                height: 90px;
+                padding: 8px;
+            }
+
+            .dpad-btn {
+                width: 24px;
+                height: 24px;
+                font-size: 0.75rem;
+            }
+
+            .diary-form {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ヘッダー / ヒーローエリア -->
+    <header>
+        <h1>🐾 フェレット日記 🐾</h1>
+        <p>あの子たちと過ごす、まったり愛おしい日々を記録するポートフォリオスペース</p>
+        <!-- クラウドステータス表示 -->
+        <div id="cloud-status" style="margin-top: 15px; font-size: 0.95rem; background: rgba(255, 255, 255, 0.4); padding: 8px 18px; border-radius: 20px; display: inline-flex; align-items: center; gap: 8px;">
+            <i class="fa-solid fa-sync fa-spin"></i> 接続を準備中...
+        </div>
+        <a class="scroll-down" href="#memories-section">
+            <i class="fa-solid fa-chevron-down"></i>
+        </a>
+    </header>
+
+    <!-- 3D思い出空間セクション -->
+    <section id="memories-section" class="fade-in-section">
+        <h2>あの子たちとの思い出のお部屋</h2>
+        <p class="3d-intro">フェレットたちと同じ目線になって、一緒に走り回れるワンルームの部屋を作りました！</p>
+        
+        <div class="3d-instructions">
+            <span class="pc-only"><i class="fa-solid fa-keyboard"></i> <strong>操作方法：</strong> マウスドラッグで視点変更 / <code>W, A, S, D</code> または <code>↑, ←, ↓, →</code> キーで移動できます🐾</span>
+        </div>
+
+        <div class="canvas-container">
+            <!-- Three.js描画領域 -->
+            <canvas id="three-canvas"></canvas>
+
+            <!-- バーチャルコントローラー（スマホ/タッチ用） -->
+            <div class="dpad-container" id="virtual-dpad">
+                <button class="dpad-btn dpad-up" id="btn-forward"><i class="fa-solid fa-chevron-up"></i></button>
+                <button class="dpad-btn dpad-left" id="btn-left"><i class="fa-solid fa-turn-left"></i></button>
+                <button class="dpad-btn dpad-right" id="btn-right"><i class="fa-solid fa-turn-right"></i></button>
+                <button class="dpad-btn dpad-down" id="btn-backward"><i class="fa-solid fa-chevron-down"></i></button>
+            </div>
+            
+            <!-- 3Dワールドコントローラー -->
+            <div class="controls-panel">
+                <button class="control-btn" id="daynight-btn" onclick="toggleDayNight()">
+                    <i class="fa-solid fa-moon" id="daynight-icon"></i> <span id="daynight-text">夜にする</span>
+                </button>
+                <button class="control-btn" onclick="makeAllJump()">
+                    <i class="fa-solid fa-heart"></i> みんなでジャンプ！
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- 日記＆ブログ機能セクション -->
+    <section id="diary-section" class="fade-in-section">
+        <div class="diary-layout">
+            
+            <!-- 日記入力フォーム（左側） -->
+            <div class="diary-form">
+                <h2><i class="fa-solid fa-pen-nib"></i> 新しい日記をかく</h2>
+                <p style="font-size:0.85rem; color:#8c6a5c; margin-bottom:15px;"><i class="fa-solid fa-cloud-arrow-up"></i> 投稿はクラウドまたはローカルストレージへ自動的に保存されます。</p>
+                
+                <div class="input-group">
+                    <label for="titleInput">今日のタイトル</label>
+                    <input type="text" id="titleInput" placeholder="例：お気に入りの寝床を見つけた日">
+                </div>
+
+                <div class="input-group">
+                    <label for="contentInput">内容</label>
+                    <textarea id="contentInput" placeholder="今日あの子たちはどんな面白いことをした？🐾"></textarea>
+                </div>
+
+                <div class="input-group">
+                    <label>写真をそえる</label>
+                    <div class="file-upload">
+                        <div class="file-upload-label">
+                            <i class="fa-solid fa-camera"></i> <span id="file-status">画像を選択する</span>
+                        </div>
+                        <input type="file" id="imageInput" accept="image/*" onchange="previewImage(event)">
+                    </div>
+                    <div class="preview-container">
+                        <img id="imagePreview" class="preview-img" alt="選択された画像のプレビュー">
+                    </div>
+                </div>
+
+                <button class="submit-btn" onclick="addDiary()">日記を保存する</button>
+            </div>
+
+            <!-- これまでの日記一覧（右側） -->
+            <div class="diary-list-container">
+                <h2><i class="fa-solid fa-book-open"></i> これまでの思い出ログ</h2>
+                <div id="diaryContainer">
+                    <!-- JavaScriptでここに日記が差し込まれます -->
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- カスタム通知アラート -->
+    <div class="modal-overlay" id="customAlertOverlay">
+        <div class="modal-box">
+            <p id="customAlertText">アラート内容</p>
+            <div class="modal-buttons">
+                <button class="modal-btn" onclick="closeCustomAlert()">OK🐾</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- カスタム確認ダイアログ -->
+    <div class="modal-overlay" id="customConfirmOverlay">
+        <div class="modal-box">
+            <p id="customConfirmText">確認事項</p>
+            <div class="modal-buttons">
+                <button class="modal-btn" id="customConfirmYesBtn">はい🐾</button>
+                <button class="modal-btn modal-btn-cancel" onclick="closeCustomConfirm()">キャンセル</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- フッター -->
+    <footer>
+        <p>© 2026 フェレット日記 & ポートフォリオ Site All Rights Reserved.</p>
+        <p>Designed with 🐾 , Three.js and Firebase / LocalStorage</p>
+    </footer>
+
+    <!-- ==========================================
+       8. Javascript ロジック (Three.js & Firebase & フォーム制御)
+       ========================================== -->
+    <script type="module">
+        // Firebase SDK のインポート
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, doc, addDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        /* ==========================================
+           A. Firebase 初期設定 / モード判定 (Rule 1 & Rule 3 準拠)
+           ========================================== */
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'ferret-diary-app';
+        let firebaseEnabled = false;
+        let db = null;
+        let auth = null;
+        let currentUser = null;
+
+        // Firebaseが利用可能な有効な設定があるか検証
+        let firebaseConfig = null;
+        if (typeof __firebase_config !== 'undefined') {
+            try {
+                firebaseConfig = JSON.parse(__firebase_config);
+                // API Keyが空文字でないか、かつダミーでないかチェック
+                if (firebaseConfig && firebaseConfig.apiKey && firebaseConfig.apiKey !== "") {
+                    firebaseEnabled = true;
+                }
+            } catch (e) {
+                console.warn("Firebase config parse failed, falling back to LocalStorage.");
+            }
+        }
+
+        // Firebaseのセットアップ
+        if (firebaseEnabled) {
+            try {
+                const app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+
+                // ログイン処理の開始 (Rule 3)
+                const initAuth = async () => {
+                    try {
+                        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                            await signInWithCustomToken(auth, __initial_auth_token);
+                        } else {
+                            await signInAnonymously(auth);
+                        }
+                    } catch (error) {
+                        console.error("Firebase auth error, switching to LocalStorage mode:", error);
+                        enableLocalStorageFallback();
+                    }
+                };
+
+                // 認証状態の監視 (Rule 3)
+                onAuthStateChanged(auth, (user) => {
+                    currentUser = user;
+                    if (user) {
+                        console.log("Firebase Authenticated! User ID:", user.uid);
+                        document.getElementById('cloud-status').innerHTML = `<i class="fa-solid fa-cloud" style="color: #aed9e0;"></i> クラウド同期中 (${user.uid.substring(0, 6)}...)`;
+                        subscribeDiaries(); // クラウドから日記データを取得
+                    } else {
+                        initAuth();
+                    }
+                });
+            } catch (err) {
+                console.error("Firebase init failed, switching to LocalStorage mode:", err);
+                enableLocalStorageFallback();
+            }
+        } else {
+            // 最初からFirebase設定がない場合はLocalStorageモードへ移行
+            enableLocalStorageFallback();
+        }
+
+        // ローカルストレージ動作モードへの切り替え
+        function enableLocalStorageFallback() {
+            firebaseEnabled = false;
+            currentUser = { uid: "local-user" }; // 擬似ユーザー
+            console.log("Running in LocalStorage mode (Offline-safe).");
+            document.getElementById('cloud-status').innerHTML = `<i class="fa-solid fa-house-laptop" style="color: #ddbdf6;"></i> ローカル保存モード（オフライン🐾）`;
+            loadLocalDiaries(); // ローカルストレージから日記データをロード
+        }
+
+        /* ==========================================
+           B. カスタムモーダル処理 (標準アラート＆コンファームの安全なオーバーライド)
+           ========================================== */
+        let confirmSuccessCallback = null;
+
+        window.showCustomAlert = function(msg) {
+            document.getElementById('customAlertText').innerText = msg;
+            document.getElementById('customAlertOverlay').style.display = 'flex';
+        }
+
+        window.closeCustomAlert = function() {
+            document.getElementById('customAlertOverlay').style.display = 'none';
+        }
+
+        window.showCustomConfirm = function(msg, callback) {
+            document.getElementById('customConfirmText').innerText = msg;
+            confirmSuccessCallback = callback;
+            document.getElementById('customConfirmOverlay').style.display = 'flex';
+        }
+
+        window.closeCustomConfirm = function() {
+            document.getElementById('customConfirmOverlay').style.display = 'none';
+            confirmSuccessCallback = null;
+        }
+
+        document.getElementById('customConfirmYesBtn').addEventListener('click', () => {
+            if (confirmSuccessCallback) {
+                confirmSuccessCallback();
+            }
+            closeCustomConfirm();
+        });
+
+
+        /* ==========================================
+           C. スクロール監視 (Fade-in アニメーション)
+           ========================================== */
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('is-visible');
+                }
+            });
+        }, { threshold: 0.1 });
+
+        document.querySelectorAll('.fade-in-section').forEach(section => {
+            observer.observe(section);
+        });
+
+        /* ==========================================
+           D. Three.js: 一人称視点ワンルームの思い出空間
+           ========================================== */
+        // グローバル変数の宣言
+        let scene, camera, renderer, ferrets = [], particles, ambientLight, directionalLight, windowLight;
+        let isNight = false;
+        let raycaster = new THREE.Raycaster();
+        let mouse = new THREE.Vector2();
+        
+        // 一人称カメラ制御用の状態変数
+        let cameraRotation = { yaw: -Math.PI / 2, pitch: 0 }; 
+        const moveSpeed = 0.08;
+        const rotateSpeed = 0.025;
+        let keyStates = {
+            forward: false,
+            backward: false,
+            left: false,
+            right: false
+        };
+
+        let isDragging = false;
+        let previousMousePosition = { x: 0, y: 0 };
+
+        // 部屋の壁の限界
+        const roomLimits = {
+            minX: -4.5,
+            maxX: 4.5,
+            minZ: -4.5,
+            maxZ: 4.5
+        };
+
+        // DOMのレンダリングが完了してから安全に初期化
+        document.addEventListener('DOMContentLoaded', () => {
+            initThree();
+        });
+
+        function initThree() {
+            const container = document.querySelector('.canvas-container');
+            if (!container) return; // コンテナが見つからない場合はスキップ
+
+            const width = container.clientWidth || 1000;
+            const height = container.clientHeight || 550;
+
+            // 1. シーンの作成
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0xfbf7f0); // 暖かい部屋の色
+
+            // 2. カメラの作成（一人称）
+            camera = new THREE.PerspectiveCamera(50, width / height, 0.1, 100);
+            camera.position.set(0, 0.8, 3.5); // 床からの高さ0.8m
+
+            // 3. レンダラー
+            renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('three-canvas'), antialias: true });
+            renderer.setSize(width, height);
+            renderer.setPixelRatio(window.devicePixelRatio || 1);
+            renderer.shadowMap.enabled = true;
+
+            // 4. 照明の設定
+            ambientLight = new THREE.AmbientLight(0xfff5ea, 0.7); 
+            scene.add(ambientLight);
+
+            directionalLight = new THREE.DirectionalLight(0xfffaed, 0.6); 
+            directionalLight.position.set(0, 4.5, 0);
+            directionalLight.castShadow = true;
+            directionalLight.shadow.mapSize.width = 1024;
+            directionalLight.shadow.mapSize.height = 1024;
+            scene.add(directionalLight);
+
+            windowLight = new THREE.DirectionalLight(0x90e0ef, 0.4);
+            windowLight.position.set(6, 2, -2);
+            scene.add(windowLight);
+
+            // 5. お部屋（ワンルーム）の構築
+            buildRoom();
+
+            // 6. 3Dフェレットたち（セーブル2匹、ホワイト1匹）の生成
+            // ① セーブル（ココア）
+            const ferret1 = createFerretMesh(0x7f5539, 0x4a3121, "ココア");
+            ferret1.mesh.position.set(-1.8, 0.18, -0.5);
+            ferret1.mesh.rotation.y = Math.PI / 4;
+            scene.add(ferret1.mesh);
+            ferrets.push(ferret1);
+
+            // ② セーブル（モカ）
+            const ferret2 = createFerretMesh(0x6f4e37, 0x3d2314, "モカ");
+            ferret2.mesh.position.set(1.5, 0.18, -2);
+            ferret2.mesh.rotation.y = -Math.PI / 1.5;
+            scene.add(ferret2.mesh);
+            ferrets.push(ferret2);
+
+            // ③ ホワイト（ミルク）
+            const ferret3 = createFerretMesh(0xffffff, 0xeeeeee, "ミルク");
+            ferret3.mesh.position.set(0.2, 0.18, 1.2);
+            ferret3.mesh.rotation.y = Math.PI / 12;
+            scene.add(ferret3.mesh);
+            ferrets.push(ferret3);
+
+            // 7. キラキラ星屑（夜モードの演出用）
+            const particleCount = 60;
+            const particleGeo = new THREE.BufferGeometry();
+            const positions = new Float32Array(particleCount * 3);
+            for (let i = 0; i < particleCount * 3; i += 3) {
+                positions[i] = (Math.random() - 0.5) * 9;
+                positions[i + 1] = Math.random() * 4;
+                positions[i + 2] = (Math.random() - 0.5) * 9;
+            }
+            particleGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            const particleMat = new THREE.PointsMaterial({
+                color: 0xfff3b0,
+                size: 0.1,
+                transparent: true,
+                opacity: 0.0 // 初期は昼なので非表示
+            });
+            particles = new THREE.Points(particleGeo, particleMat);
+            scene.add(particles);
+
+            // 8. イベントとコントローラー登録
+            window.addEventListener('resize', onWindowResize);
+            
+            // キーボード操作の登録
+            window.addEventListener('keydown', onKeyDown);
+            window.addEventListener('keyup', onKeyUp);
+
+            // マウスドラッグでカメラ回転する仕組みの登録
+            const canvasEl = document.getElementById('three-canvas');
+            canvasEl.addEventListener('mousedown', onMouseDown);
+            window.addEventListener('mousemove', onMouseMove);
+            window.addEventListener('mouseup', onMouseUp);
+            canvasEl.addEventListener('click', onCanvasClick);
+
+            // スマホタッチでのドラッグ視点変更
+            canvasEl.addEventListener('touchstart', onTouchStart, { passive: false });
+            canvasEl.addEventListener('touchmove', onTouchMove, { passive: false });
+            canvasEl.addEventListener('touchend', onTouchEnd);
+
+            // D-Pad（バーチャル十字キー）のボタンイベント登録
+            setupDPad();
+
+            // 初期カメラターゲット設定
+            updateCameraDirection();
+
+            // 9. アニメーションループ開始
+            animate();
+        }
+
+        // --- ワンルームを作る関数 ---
+        function buildRoom() {
+            // ① 床（フローリング調）
+            const floorGeo = new THREE.BoxGeometry(10, 0.1, 10);
+            const floorMat = new THREE.MeshLambertMaterial({ color: 0xd0a37e }); 
+            const floor = new THREE.Mesh(floorGeo, floorMat);
+            floor.position.y = -0.05;
+            floor.receiveShadow = true;
+            scene.add(floor);
+
+            // 絨毯（ラグ）
+            const rugGeo = new THREE.BoxGeometry(4.5, 0.02, 4.5);
+            const rugMat = new THREE.MeshLambertMaterial({ color: 0xffe5d9 }); 
+            const rug = new THREE.Mesh(rugGeo, rugMat);
+            rug.position.set(0, 0.01, 0);
+            rug.receiveShadow = true;
+            scene.add(rug);
+
+            // ② 壁（優しいクリーム色）
+            const wallMat = new THREE.MeshLambertMaterial({ color: 0xfdf6ee });
+            
+            // 奥の壁
+            const backWallGeo = new THREE.BoxGeometry(10, 4, 0.2);
+            const backWall = new THREE.Mesh(backWallGeo, wallMat);
+            backWall.position.set(0, 2, -5);
+            backWall.castShadow = true;
+            backWall.receiveShadow = true;
+            scene.add(backWall);
+
+            // 左の壁
+            const leftWallGeo = new THREE.BoxGeometry(0.2, 4, 10);
+            const leftWall = new THREE.Mesh(leftWallGeo, wallMat);
+            leftWall.position.set(-5, 2, 0);
+            scene.add(leftWall);
+
+            // 右の壁
+            const rightWallGeo = new THREE.BoxGeometry(0.2, 4, 10);
+            const rightWall = new THREE.Mesh(rightWallGeo, wallMat);
+            rightWall.position.set(5, 2, 0);
+            scene.add(rightWall);
+
+            // 窓
+            const windowGeo = new THREE.BoxGeometry(0.05, 1.8, 3);
+            const windowMat = new THREE.MeshLambertMaterial({ color: 0xe0f7fa, transparent: true, opacity: 0.8 });
+            const windowFrame = new THREE.Mesh(windowGeo, windowMat);
+            windowFrame.position.set(4.88, 2, 0);
+            scene.add(windowFrame);
+
+            const frameGeo = new THREE.BoxGeometry(0.1, 1.9, 0.1);
+            const frameMat = new THREE.MeshLambertMaterial({ color: 0x7f5539 });
+            const frame = new THREE.Mesh(frameGeo, frameMat);
+            frame.position.set(4.88, 2, 0);
+            scene.add(frame);
+
+            // 手前の壁
+            const frontWallGeo = new THREE.BoxGeometry(10, 4, 0.2);
+            const frontWall = new THREE.Mesh(frontWallGeo, wallMat);
+            frontWall.position.set(0, 2, 5);
+            scene.add(frontWall);
+
+            // ③ お部屋の家具
+            // トンネル
+            const tunnelGeo = new THREE.CylinderGeometry(0.25, 0.25, 1.5, 16, 1, true); 
+            const tunnelMat = new THREE.MeshLambertMaterial({ color: 0xddbdf6, side: THREE.DoubleSide });
+            const tunnel = new THREE.Mesh(tunnelGeo, tunnelMat);
+            tunnel.rotation.y = Math.PI / 4;
+            tunnel.position.set(-2, 0.22, -2);
+            tunnel.castShadow = true;
+            scene.add(tunnel);
+
+            // ふかふかベッド
+            const bedBaseGeo = new THREE.CylinderGeometry(0.6, 0.6, 0.2, 16);
+            const bedBaseMat = new THREE.MeshLambertMaterial({ color: 0xffb5a7 });
+            const bedBase = new THREE.Mesh(bedBaseGeo, bedBaseMat);
+            bedBase.position.set(2, 0.1, 2);
+            bedBase.castShadow = true;
+            scene.add(bedBase);
+
+            const cushionGeo = new THREE.CylinderGeometry(0.5, 0.5, 0.15, 16);
+            const cushionMat = new THREE.MeshLambertMaterial({ color: 0xffcad4 });
+            const cushion = new THREE.Mesh(cushionGeo, cushionMat);
+            cushion.position.set(2, 0.2, 2);
+            scene.add(cushion);
+
+            // ローテーブル
+            const tablePlateGeo = new THREE.BoxGeometry(1.6, 0.1, 1.2);
+            const tableMat = new THREE.MeshLambertMaterial({ color: 0x9c6644 });
+            const tablePlate = new THREE.Mesh(tablePlateGeo, tableMat);
+            tablePlate.position.set(0, 0.45, -1.5);
+            tablePlate.castShadow = true;
+            scene.add(tablePlate);
+
+            // テーブルの脚（4本）
+            const legGeo = new THREE.CylinderGeometry(0.05, 0.05, 0.4, 8);
+            for (let i = 0; i < 4; i++) {
+                const leg = new THREE.Mesh(legGeo, tableMat);
+                const xSign = i < 2 ? 1 : -1;
+                const zSign = i % 2 === 0 ? 1 : -1;
+                leg.position.set(0.7 * xSign, 0.2, -1.5 + 0.5 * zSign);
+                leg.castShadow = true;
+                scene.add(leg);
+            }
+        }
+
+        // --- フェレット 3Dパーツ組み立て ---
+        function createFerretMesh(bodyColor, accentColor, name) {
+            const ferretGroup = new THREE.Group();
+            ferretGroup.name = name;
+
+            // 体
+            const bodyGeo = new THREE.CylinderGeometry(0.16, 0.16, 1.0, 12);
+            const bodyMat = new THREE.MeshLambertMaterial({ color: bodyColor });
+            const body = new THREE.Mesh(bodyGeo, bodyMat);
+            body.rotation.z = Math.PI / 2;
+            body.position.y = 0.05;
+            body.castShadow = true;
+            body.receiveShadow = true;
+            ferretGroup.add(body);
+
+            // 首と頭のグループ
+            const headGroup = new THREE.Group();
+            headGroup.position.set(-0.5, 0.2, 0);
+
+            // 頭部
+            const headGeo = new THREE.SphereGeometry(0.22, 12, 12);
+            const head = new THREE.Mesh(headGeo, bodyMat);
+            head.castShadow = true;
+            headGroup.add(head);
+
+            // 鼻まわり (マズル)
+            const muzzleGeo = new THREE.SphereGeometry(0.12, 8, 8);
+            const muzzleMat = new THREE.MeshLambertMaterial({ color: bodyColor === 0xffffff ? 0xfff0f5 : 0xfff3e0 });
+            const muzzle = new THREE.Mesh(muzzleGeo, muzzleMat);
+            muzzle.position.set(-0.16, -0.04, 0);
+            headGroup.add(muzzle);
+
+            // 鼻先
+            const noseGeo = new THREE.SphereGeometry(0.04, 8, 8);
+            const noseMat = new THREE.MeshLambertMaterial({ color: 0xffb5a7 });
+            const nose = new THREE.Mesh(noseGeo, noseMat);
+            nose.position.set(-0.27, -0.04, 0);
+            headGroup.add(nose);
+
+            // おめめ
+            const eyeGeo = new THREE.SphereGeometry(0.025, 8, 8);
+            const eyeMat = new THREE.MeshBasicMaterial({ color: 0x111111 });
+            const eyeL = new THREE.Mesh(eyeGeo, eyeMat);
+            eyeL.position.set(-0.16, 0.07, 0.1);
+            const eyeR = new THREE.Mesh(eyeGeo, eyeMat);
+            eyeR.position.set(-0.16, 0.07, -0.1);
+            headGroup.add(eyeL, eyeR);
+
+            // お耳
+            const earGeo = new THREE.SphereGeometry(0.06, 8, 8);
+            const earL = new THREE.Mesh(earGeo, bodyMat);
+            earL.position.set(-0.03, 0.18, 0.12);
+            const earR = new THREE.Mesh(earGeo, bodyMat);
+            earR.position.set(-0.03, 0.18, -0.12);
+            headGroup.add(earL, earR);
+
+            ferretGroup.add(headGroup);
+
+            // 足 (4本)
+            const legGeo = new THREE.CylinderGeometry(0.05, 0.05, 0.25, 8);
+            const legMat = new THREE.MeshLambertMaterial({ color: accentColor });
+            
+            const legFL = new THREE.Mesh(legGeo, legMat);
+            legFL.position.set(-0.3, -0.14, 0.13);
+            legFL.castShadow = true;
+            
+            const legFR = new THREE.Mesh(legGeo, legMat);
+            legFR.position.set(-0.3, -0.14, -0.13);
+            legFR.castShadow = true;
+
+            const legBL = new THREE.Mesh(legGeo, legMat);
+            legBL.position.set(0.3, -0.14, 0.13);
+            legBL.castShadow = true;
+
+            const legBR = new THREE.Mesh(legGeo, legMat);
+            legBR.position.set(0.3, -0.14, -0.13);
+            legBR.castShadow = true;
+
+            ferretGroup.add(legFL, legFR, legBL, legBR);
+
+            // しっぽ
+            const tailGeo = new THREE.CylinderGeometry(0.05, 0.02, 0.45, 8);
+            const tailMat = new THREE.MeshLambertMaterial({ color: accentColor });
+            const tail = new THREE.Mesh(tailGeo, tailMat);
+            tail.position.set(0.55, 0.12, 0);
+            tail.rotation.z = -Math.PI / 4;
+            tail.castShadow = true;
+            ferretGroup.add(tail);
+
+            return {
+                mesh: ferretGroup,
+                legs: [legFL, legFR, legBL, legBR],
+                tail: tail,
+                jumpY: 0,
+                jumpSpeed: 0,
+                isJumping: false,
+                wiggleOffset: Math.random() * 100,
+                direction: Math.random() * Math.PI * 2, 
+                speed: 0.015,
+                changeDirTimer: 0,
+                walkTimer: 0
+            };
+        }
+
+        // --- 毎フレームの描画処理 & カメラ制御 ---
+        let angle = 0;
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // 1. 一人称視点の移動制御
+            handleMovement();
+
+            // 2. カメラの向きの反映
+            updateCameraDirection();
+
+            // 3. 星屑（夜モード）のアニメーション
+            if (particles && isNight) {
+                const positions = particles.geometry.attributes.position.array;
+                for (let i = 1; i < positions.length; i += 3) {
+                    positions[i] -= 0.005; 
+                    if (positions[i] < 0) {
+                        positions[i] = 4; 
+                    }
+                }
+                particles.geometry.attributes.position.needsUpdate = true;
+            }
+
+            // 4. フェレットたちのランダム動き
+            const time = Date.now() * 0.003;
+            ferrets.forEach(f => {
+                f.walkTimer += 0.15;
+
+                f.changeDirTimer -= 1;
+                if (f.changeDirTimer <= 0) {
+                    f.direction += (Math.random() - 0.5) * Math.PI; 
+                    f.changeDirTimer = Math.random() * 100 + 100;
+                }
+
+                const moveStepX = Math.cos(f.direction) * f.speed;
+                const moveStepZ = Math.sin(f.direction) * f.speed;
+
+                f.mesh.position.x += moveStepX;
+                f.mesh.position.z += moveStepZ;
+
+                if (f.mesh.position.x < roomLimits.minX || f.mesh.position.x > roomLimits.maxX) {
+                    f.direction = Math.PI - f.direction;
+                    f.mesh.position.x = Math.max(roomLimits.minX, Math.min(roomLimits.maxX, f.mesh.position.x));
+                }
+                if (f.mesh.position.z < roomLimits.minZ || f.mesh.position.z > roomLimits.maxZ) {
+                    f.direction = -f.direction;
+                    f.mesh.position.z = Math.max(roomLimits.minZ, Math.min(roomLimits.maxZ, f.mesh.position.z));
+                }
+
+                f.mesh.rotation.y = -f.direction + Math.PI;
+
+                f.legs[0].rotation.z = Math.sin(f.walkTimer) * 0.4;
+                f.legs[1].rotation.z = -Math.sin(f.walkTimer) * 0.4;
+                f.legs[2].rotation.z = -Math.sin(f.walkTimer) * 0.4;
+                f.legs[3].rotation.z = Math.sin(f.walkTimer) * 0.4;
+
+                f.tail.rotation.y = Math.sin(f.walkTimer) * 0.3; 
+
+                const breath = Math.sin(time + f.wiggleOffset) * 0.02;
+                f.mesh.scale.set(1 + breath, 1 + breath, 1);
+
+                if (f.isJumping) {
+                    f.jumpY += f.jumpSpeed;
+                    f.jumpSpeed -= 0.015;
+                    if (f.jumpY <= 0) {
+                        f.jumpY = 0;
+                        f.isJumping = false;
+                    }
+                    f.mesh.position.y = 0.18 + f.jumpY;
+                }
+            });
+
+            if (renderer && scene && camera) {
+                renderer.render(scene, camera);
+            }
+        }
+
+        // --- 一人称カメラの向き反映 ---
+        function updateCameraDirection() {
+            if (!camera) return;
+            cameraRotation.pitch = Math.max(-Math.PI / 4, Math.min(Math.PI / 4, cameraRotation.pitch));
+
+            const target = new THREE.Vector3();
+            target.x = camera.position.x + Math.cos(cameraRotation.yaw) * Math.cos(cameraRotation.pitch);
+            target.y = camera.position.y + Math.sin(cameraRotation.pitch);
+            target.z = camera.position.z + Math.sin(cameraRotation.yaw) * Math.cos(cameraRotation.pitch);
+
+            camera.lookAt(target);
+        }
+
+        // --- 移動ロジック ---
+        function handleMovement() {
+            if (!camera) return;
+            let forwardX = Math.cos(cameraRotation.yaw);
+            let forwardZ = Math.sin(cameraRotation.yaw);
+
+            let rightX = -Math.sin(cameraRotation.yaw);
+            let rightZ = Math.cos(cameraRotation.yaw);
+
+            let newPosX = camera.position.x;
+            let newPosZ = camera.position.z;
+
+            if (keyStates.forward) {
+                newPosX += forwardX * moveSpeed;
+                newPosZ += forwardZ * moveSpeed;
+            }
+            if (keyStates.backward) {
+                newPosX -= forwardX * moveSpeed;
+                newPosZ -= forwardZ * moveSpeed;
+            }
+            if (keyStates.left) {
+                cameraRotation.yaw -= rotateSpeed;
+            }
+            if (keyStates.right) {
+                cameraRotation.yaw += rotateSpeed;
+            }
+
+            camera.position.x = Math.max(roomLimits.minX, Math.min(roomLimits.maxX, newPosX));
+            camera.position.z = Math.max(roomLimits.minZ, Math.min(roomLimits.maxZ, newPosZ));
+        }
+
+        // --- キー操作ハンドラー ---
+        function onKeyDown(event) {
+            switch (event.code) {
+                case 'KeyW':
+                case 'ArrowUp':
+                    keyStates.forward = true;
+                    break;
+                case 'KeyS':
+                case 'ArrowDown':
+                    keyStates.backward = true;
+                    break;
+                case 'KeyA':
+                case 'ArrowLeft':
+                    keyStates.left = true;
+                    break;
+                case 'KeyD':
+                case 'ArrowRight':
+                    keyStates.right = true;
+                    break;
+            }
+        }
+
+        function onKeyUp(event) {
+            switch (event.code) {
+                case 'KeyW':
+                case 'ArrowUp':
+                    keyStates.forward = false;
+                    break;
+                case 'KeyS':
+                case 'ArrowDown':
+                    keyStates.backward = false;
+                    break;
+                case 'KeyA':
+                case 'ArrowLeft':
+                    keyStates.left = false;
+                    break;
+                case 'KeyD':
+                case 'ArrowRight':
+                    keyStates.right = false;
+                    break;
+            }
+        }
+
+        // --- マウス操作 ---
+        function onMouseDown(event) {
+            isDragging = true;
+            previousMousePosition = {
+                x: event.clientX,
+                y: event.clientY
+            };
+        }
+
+        function onMouseMove(event) {
+            if (!isDragging) return;
+
+            const deltaMove = {
+                x: event.clientX - previousMousePosition.x,
+                y: event.clientY - previousMousePosition.y
+            };
+
+            cameraRotation.yaw += deltaMove.x * 0.005;
+            cameraRotation.pitch -= deltaMove.y * 0.005;
+
+            previousMousePosition = {
+                x: event.clientX,
+                y: event.clientY
+            };
+        }
+
+        function onMouseUp() {
+            isDragging = false;
+        }
+
+        // --- タッチ操作 ---
+        function onTouchStart(event) {
+            if (event.touches.length === 1) {
+                isDragging = true;
+                previousMousePosition = {
+                    x: event.touches[0].clientX,
+                    y: event.touches[0].clientY
+                };
+            }
+        }
+
+        function onTouchMove(event) {
+            if (!isDragging || event.touches.length !== 1) return;
+            event.preventDefault(); 
+
+            const deltaMove = {
+                x: event.touches[0].clientX - previousMousePosition.x,
+                y: event.touches[0].clientY - previousMousePosition.y
+            };
+
+            cameraRotation.yaw += deltaMove.x * 0.006;
+            cameraRotation.pitch -= deltaMove.y * 0.006;
+
+            previousMousePosition = {
+                x: event.touches[0].clientX,
+                y: event.touches[0].clientY
+            };
+        }
+
+        function onTouchEnd() {
+            isDragging = false;
+        }
+
+        // --- バーチャルコントローラーの設定 ---
+        function setupDPad() {
+            const btnF = document.getElementById('btn-forward');
+            const btnB = document.getElementById('btn-backward');
+            const btnL = document.getElementById('btn-left');
+            const btnR = document.getElementById('btn-right');
+
+            if (!btnF || !btnB || !btnL || !btnR) return;
+
+            const startEvent = (key) => {
+                return (e) => {
+                    e.preventDefault();
+                    keyStates[key] = true;
+                };
+            };
+
+            const endEvent = (key) => {
+                return (e) => {
+                    e.preventDefault();
+                    keyStates[key] = false;
+                };
+            };
+
+            btnF.addEventListener('mousedown', startEvent('forward'));
+            btnF.addEventListener('mouseup', endEvent('forward'));
+            btnF.addEventListener('touchstart', startEvent('forward'));
+            btnF.addEventListener('touchend', endEvent('forward'));
+
+            btnB.addEventListener('mousedown', startEvent('backward'));
+            btnB.addEventListener('mouseup', endEvent('backward'));
+            btnB.addEventListener('touchstart', startEvent('backward'));
+            btnB.addEventListener('touchend', endEvent('backward'));
+
+            btnL.addEventListener('mousedown', startEvent('left'));
+            btnL.addEventListener('mouseup', endEvent('left'));
+            btnL.addEventListener('touchstart', startEvent('left'));
+            btnL.addEventListener('touchend', endEvent('left'));
+
+            btnR.addEventListener('mousedown', startEvent('right'));
+            btnR.addEventListener('mouseup', endEvent('right'));
+            btnR.addEventListener('touchstart', startEvent('right'));
+            btnR.addEventListener('touchend', endEvent('right'));
+        }
+
+        // --- フェレットたちとふれあうクリック判定 ---
+        function onCanvasClick(event) {
+            if (!camera) return;
+            const rect = renderer.domElement.getBoundingClientRect();
+            mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+            mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+            raycaster.setFromCamera(mouse, camera);
+
+            ferrets.forEach(f => {
+                const intersects = raycaster.intersectObjects(f.mesh.children, true);
+                if (intersects.length > 0) {
+                    f.direction = Math.atan2(camera.position.z - f.mesh.position.z, camera.position.x - f.mesh.position.x);
+                    makeJump(f);
+                }
+            });
+        }
+
+        function onWindowResize() {
+            const container = document.querySelector('.canvas-container');
+            if (!container || !camera || !renderer) return;
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+
+            camera.aspect = width / height;
+            camera.updateProjectionMatrix();
+            renderer.setSize(width, height);
+        }
+
+        // --- 昼夜切り替え ---
+        function toggleDayNight() {
+            const btnText = document.getElementById('daynight-text');
+            const btnIcon = document.getElementById('daynight-icon');
+            
+            isNight = !isNight;
+
+            if (isNight) {
+                ambientLight.color.setHex(0x1a2130); 
+                directionalLight.color.setHex(0xffaa44); 
+                directionalLight.intensity = 0.5;
+                
+                windowLight.color.setHex(0x1d3557); 
+                windowLight.intensity = 0.6;
+
+                particles.material.opacity = 0.7; 
+
+                btnText.textContent = "昼にする";
+                btnIcon.className = "fa-solid fa-sun";
+                
+                let progress = 0;
+                function changeBg() {
+                    progress += 0.05;
+                    scene.background.lerp(new THREE.Color(0x0a1128), progress); 
+                    if (progress < 1) requestAnimationFrame(changeBg);
+                }
+                changeBg();
+            } else {
+                ambientLight.color.setHex(0xfff5ea);
+                directionalLight.color.setHex(0xfffaed);
+                directionalLight.intensity = 0.7;
+
+                windowLight.color.setHex(0x90e0ef);
+                windowLight.intensity = 0.4;
+
+                particles.material.opacity = 0.0; 
+
+                btnText.textContent = "夜にする";
+                btnIcon.className = "fa-solid fa-moon";
+
+                let progress = 0;
+                function changeBg() {
+                    progress += 0.05;
+                    scene.background.lerp(new THREE.Color(0xfbf7f0), progress);
+                    if (progress < 1) requestAnimationFrame(changeBg);
+                }
+                changeBg();
+            }
+        }
+
+        function makeJump(ferret) {
+            if (!ferret.isJumping) {
+                ferret.jumpSpeed = 0.18;
+                ferret.isJumping = true;
+            }
+        }
+
+        function makeAllJump() {
+            ferrets.forEach(f => makeJump(f));
+        }
+
+        window.toggleDayNight = toggleDayNight;
+        window.makeAllJump = makeAllJump;
+
+
+        /* ==========================================
+           E. 写真付き日記機能 (クラウド / ローカルストレージ 自動ハイブリッド対応)
+           ========================================== */
+        // 画像プレビューの読み込み
+        function previewImage(event) {
+            const file = event.target.files[0];
+            const preview = document.getElementById('imagePreview');
+            const fileStatus = document.getElementById('file-status');
+
+            if (file) {
+                fileStatus.textContent = file.name;
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    currentImageData = e.target.result;
+                    preview.src = currentImageData;
+                    preview.style.display = 'inline-block';
+                }
+                reader.readAsDataURL(file);
+            } else {
+                currentImageData = "";
+                preview.style.display = 'none';
+                fileStatus.textContent = "画像を選択する";
+            }
+        }
+
+        // 日記の追加
+        async function addDiary() {
+            const titleInput = document.getElementById('titleInput');
+            const contentInput = document.getElementById('contentInput');
+            const imageInput = document.getElementById('imageInput');
+            const preview = document.getElementById('imagePreview');
+            const fileStatus = document.getElementById('file-status');
+
+            if (titleInput.value.trim() === '' || contentInput.value.trim() === '') {
+                showCustomAlert('タイトルと日記の内容を書いてね！🐾');
+                return;
+            }
+
+            const now = new Date();
+            const dateString = `${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日 ${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+            const diaryEntry = {
+                id: Date.now(), // ローカル判定用一意キー
+                date: dateString,
+                title: titleInput.value,
+                content: contentInput.value,
+                image: currentImageData, 
+                createdAt: Date.now(),
+                userId: currentUser ? currentUser.uid : "offline-user"
+            };
+
+            // Firebase(クラウド)が有効な場合
+            if (firebaseEnabled && db) {
+                const diariesColRef = collection(db, 'artifacts', appId, 'public', 'data', 'diaries');
+                try {
+                    await addDoc(diariesColRef, diaryEntry);
+                } catch (error) {
+                    console.error("Firestore write failed, trying local fallback:", error);
+                    showCustomAlert('クラウドへの保存に失敗しました。写真のサイズが大きいか、ネットワークが不安定です。一時的にローカル保存します🐾');
+                    saveToLocalStorage(diaryEntry);
+                }
+            } else {
+                // オフライン・LocalStorageモード
+                saveToLocalStorage(diaryEntry);
+            }
+
+            // 共通の入力欄リセット処理
+            titleInput.value = '';
+            contentInput.value = '';
+            imageInput.value = '';
+            currentImageData = '';
+            preview.style.display = 'none';
+            fileStatus.textContent = "画像を選択する";
+
+            // 保存完了祝いでフェレット達が嬉しくて大ジャンプ！
+            makeAllJump();
+        }
+
+        // ローカルストレージに保存する関数
+        function saveToLocalStorage(entry) {
+            let diaries = JSON.parse(localStorage.getItem('ferretDiaries')) || [];
+            try {
+                diaries.unshift(entry);
+                localStorage.setItem('ferretDiaries', JSON.stringify(diaries));
+                loadLocalDiaries(); // 再描画
+            } catch (e) {
+                showCustomAlert('写真のファイルサイズが大きすぎて保存できませんでした。もう少し小さめの写真を試してみてね🐾');
+            }
+        }
+
+        // Firebaseリアルタイムデータベース(Firestore)監視 (Rule 1 & Rule 2 準拠)
+        function subscribeDiaries() {
+            if (!currentUser || !db) return;
+
+            const diariesColRef = collection(db, 'artifacts', appId, 'public', 'data', 'diaries');
+
+            // リアルタイム接続監視開始
+            onSnapshot(diariesColRef, (snapshot) => {
+                const diariesList = [];
+                snapshot.forEach(doc => {
+                    diariesList.push({
+                        docId: doc.id,
+                        ...doc.data()
+                    });
+                });
+
+                // メモリ上で新しいもの順にソート (Rule 2: Firestore側での複合クエリを回避)
+                diariesList.sort((a, b) => {
+                    const timeA = a.createdAt || 0;
+                    const timeB = b.createdAt || 0;
+                    return timeB - timeA; 
+                });
+
+                displayDiaries(diariesList);
+            }, (error) => {
+                console.warn("Firestore subscription failed, switching to LocalStorage mode:", error);
+                enableLocalStorageFallback();
+            });
+        }
+
+        // ローカル日記データの読み込み
+        function loadLocalDiaries() {
+            let diaries = JSON.parse(localStorage.getItem('ferretDiaries')) || [];
+            displayDiaries(diaries);
+        }
+
+        // 画面に日記一覧を表示
+        function displayDiaries(diaries) {
+            const container = document.getElementById('diaryContainer');
+            container.innerHTML = '';
+
+            if (diaries.length === 0) {
+                container.innerHTML = '<p style="text-align:center; color:#a3a3a3; padding: 20px;">まだ日記がありません。最初の思い出を記録しましょう！🐾</p>';
+                return;
+            }
+
+            diaries.forEach(diary => {
+                const card = document.createElement('div');
+                card.className = 'diary-card';
+
+                let imgHtml = '';
+                if (diary.image) {
+                    imgHtml = `<img src="${diary.image}" class="diary-image" alt="思い出写真">`;
+                }
+
+                // 識別用ラベル
+                let tagLabel = '';
+                if (firebaseEnabled && diary.userId) {
+                    tagLabel = `<span style="font-size:0.75rem; background:#ede0d4; padding:3px 8px; border-radius:10px; margin-left:10px;"><i class="fa-solid fa-cloud"></i> ID: ${diary.userId.substring(0, 6)}...</span>`;
+                } else {
+                    tagLabel = `<span style="font-size:0.75rem; background:#ede0d4; padding:3px 8px; border-radius:10px; margin-left:10px;"><i class="fa-solid fa-house-laptop"></i> ローカル</span>`;
+                }
+
+                card.innerHTML = `
+                    <div class="diary-date">
+                        <i class="fa-solid fa-calendar-days"></i> ${diary.date}
+                        ${tagLabel}
+                    </div>
+                    <div class="diary-title">${escapeHTML(diary.title)}</div>
+                    ${imgHtml}
+                    <div class="diary-content">${escapeHTML(diary.content)}</div>
+                    <button class="delete-btn">削除</button>
+                `;
+
+                // 削除ボタンへのイベントバインド
+                card.querySelector('.delete-btn').addEventListener('click', () => {
+                    const idToDelete = firebaseEnabled ? diary.docId : diary.id;
+                    deleteDiary(idToDelete);
+                });
+
+                container.appendChild(card);
+            });
+        }
+
+        // 日記の削除
+        async function deleteDiary(targetIdentifier) {
+            showCustomConfirm('この大切な日記を削除してもいいですか？', async () => {
+                if (firebaseEnabled && db) {
+                    const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'diaries', targetIdentifier);
+                    try {
+                        await deleteDoc(docRef);
+                    } catch (error) {
+                        console.error("Firestore delete error:", error);
+                        showCustomAlert("削除に失敗しました。");
+                    }
+                } else {
+                    // ローカルストレージ内の削除
+                    let diaries = JSON.parse(localStorage.getItem('ferretDiaries')) || [];
+                    diaries = diaries.filter(diary => diary.id !== targetIdentifier);
+                    localStorage.setItem('ferretDiaries', JSON.stringify(diaries));
+                    loadLocalDiaries(); // 再表示
+                }
+            });
+        }
+
+        function escapeHTML(str) {
+            return str.replace(/[&<>'"]/g, 
+                tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+            );
+        }
+
+        // グローバルへ公開
+        window.previewImage = previewImage;
+        window.addDiary = addDiary;
+
+    </script>
+</body>
+</html>

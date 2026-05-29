@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,7 +8,8 @@
     <!-- Google Fonts（かわいい手書き・丸ゴシック風フォント） -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Kiwi+Maru:wght@400;500;700&family=Yusei+Magic&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Kiwi+Maru:wght@400;500;700&family=Yusei+Magic&display=swap"
+        rel="stylesheet">
     <!-- FontAwesome (アイコン用) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <!-- Three.js (3D描画用ライブラリ) -->
@@ -81,7 +83,7 @@
             font-size: 3.5rem;
             margin-bottom: 15px;
             letter-spacing: 4px;
-            text-shadow: 2px 2px 0px rgba(255,255,255,0.8);
+            text-shadow: 2px 2px 0px rgba(255, 255, 255, 0.8);
             animation: float 3s ease-in-out infinite;
         }
 
@@ -139,7 +141,7 @@
             display: inline-block;
             padding: 10px 20px;
             border-radius: 15px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.03);
         }
 
         /* 3Dキャンバスの枠 */
@@ -152,7 +154,7 @@
             overflow: hidden;
             box-shadow: 0 15px 35px rgba(93, 64, 55, 0.15);
             position: relative;
-            background-color: #fdf6ee; 
+            background-color: #fdf6ee;
         }
 
         #three-canvas {
@@ -173,7 +175,7 @@
             display: flex;
             gap: 15px;
             backdrop-filter: blur(5px);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
             z-index: 10;
         }
 
@@ -186,12 +188,12 @@
             padding: 12px;
             border-radius: 50%;
             display: grid;
-            grid-template-areas: 
+            grid-template-areas:
                 ". up ."
                 "left . right"
                 ". down .";
             gap: 6px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
             z-index: 10;
             width: 110px;
             height: 110px;
@@ -218,10 +220,25 @@
             background-color: var(--main-brown);
         }
 
-        .dpad-up { grid-area: up; justify-self: center; }
-        .dpad-down { grid-area: down; justify-self: center; }
-        .dpad-left { grid-area: left; align-self: center; }
-        .dpad-right { grid-area: right; align-self: center; }
+        .dpad-up {
+            grid-area: up;
+            justify-self: center;
+        }
+
+        .dpad-down {
+            grid-area: down;
+            justify-self: center;
+        }
+
+        .dpad-left {
+            grid-area: left;
+            align-self: center;
+        }
+
+        .dpad-right {
+            grid-area: right;
+            align-self: center;
+        }
 
         .control-btn {
             background-color: var(--accent-brown);
@@ -290,7 +307,8 @@
             font-size: 0.95rem;
         }
 
-        input[type="text"], textarea {
+        input[type="text"],
+        textarea {
             width: 100%;
             padding: 14px;
             border: 2px solid var(--border-color);
@@ -302,7 +320,8 @@
             background-color: #fffcf9;
         }
 
-        input[type="text"]:focus, textarea:focus {
+        input[type="text"]:focus,
+        textarea:focus {
             border-color: var(--accent-brown);
         }
 
@@ -357,7 +376,7 @@
             max-height: 220px;
             border-radius: 12px;
             display: none;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
         }
 
         .submit-btn {
@@ -469,15 +488,36 @@
            5. アニメーションキーフレーム & フッター
            ========================================== */
         @keyframes float {
-            0% { transform: translateY(0px); }
-            50% { transform: translateY(-10px); }
-            100% { transform: translateY(0px); }
+            0% {
+                transform: translateY(0px);
+            }
+
+            50% {
+                transform: translateY(-10px);
+            }
+
+            100% {
+                transform: translateY(0px);
+            }
         }
 
         @keyframes bounce {
-            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
-            40% { transform: translateY(-10px); }
-            60% { transform: translateY(-5px); }
+
+            0%,
+            20%,
+            50%,
+            80%,
+            100% {
+                transform: translateY(0);
+            }
+
+            40% {
+                transform: translateY(-10px);
+            }
+
+            60% {
+                transform: translateY(-5px);
+            }
         }
 
         footer {
@@ -566,7 +606,8 @@
            ========================================== */
         @media (max-width: 992px) {
             .diary-layout {
-                grid-template-columns: 1fr; /* スマホ・タブレットは1カラム */
+                grid-template-columns: 1fr;
+                /* スマホ・タブレットは1カラム */
                 gap: 40px;
             }
 
@@ -575,7 +616,7 @@
             }
 
             .canvas-container {
-                height: 480px; 
+                height: 480px;
             }
         }
 
@@ -585,7 +626,8 @@
             }
 
             .canvas-container {
-                height: 400px; /* スマホ用に最適化 */
+                height: 400px;
+                /* スマホ用に最適化 */
             }
 
             .controls-panel {
@@ -622,6 +664,7 @@
         }
     </style>
 </head>
+
 <body>
 
     <!-- ヘッダー / ヒーローエリア -->
@@ -629,7 +672,8 @@
         <h1>🐾 フェレット日記 🐾</h1>
         <p>あの子たちと過ごす、まったり愛おしい日々を記録するポートフォリオスペース</p>
         <!-- クラウドステータス表示 -->
-        <div id="cloud-status" style="margin-top: 15px; font-size: 0.95rem; background: rgba(255, 255, 255, 0.4); padding: 8px 18px; border-radius: 20px; display: inline-flex; align-items: center; gap: 8px;">
+        <div id="cloud-status"
+            style="margin-top: 15px; font-size: 0.95rem; background: rgba(255, 255, 255, 0.4); padding: 8px 18px; border-radius: 20px; display: inline-flex; align-items: center; gap: 8px;">
             <i class="fa-solid fa-sync fa-spin"></i> 接続を準備中...
         </div>
         <a class="scroll-down" href="#memories-section">
@@ -641,9 +685,10 @@
     <section id="memories-section" class="fade-in-section">
         <h2>あの子たちとの思い出のお部屋</h2>
         <p class="3d-intro">フェレットたちと同じ目線になって、一緒に走り回れるワンルームの部屋を作りました！</p>
-        
+
         <div class="3d-instructions">
-            <span class="pc-only"><i class="fa-solid fa-keyboard"></i> <strong>操作方法：</strong> マウスドラッグで視点変更 / <code>W, A, S, D</code> または <code>↑, ←, ↓, →</code> キーで移動できます🐾</span>
+            <span class="pc-only"><i class="fa-solid fa-keyboard"></i> <strong>操作方法：</strong> マウスドラッグで視点変更 /
+                <code>W, A, S, D</code> または <code>↑, ←, ↓, →</code> キーで移動できます🐾</span>
         </div>
 
         <div class="canvas-container">
@@ -657,7 +702,7 @@
                 <button class="dpad-btn dpad-right" id="btn-right"><i class="fa-solid fa-turn-right"></i></button>
                 <button class="dpad-btn dpad-down" id="btn-backward"><i class="fa-solid fa-chevron-down"></i></button>
             </div>
-            
+
             <!-- 3Dワールドコントローラー -->
             <div class="controls-panel">
                 <button class="control-btn" id="daynight-btn" onclick="toggleDayNight()">
@@ -673,12 +718,13 @@
     <!-- 日記＆ブログ機能セクション -->
     <section id="diary-section" class="fade-in-section">
         <div class="diary-layout">
-            
+
             <!-- 日記入力フォーム（左側） -->
             <div class="diary-form">
                 <h2><i class="fa-solid fa-pen-nib"></i> 新しい日記をかく</h2>
-                <p style="font-size:0.85rem; color:#8c6a5c; margin-bottom:15px;"><i class="fa-solid fa-cloud-arrow-up"></i> 投稿はクラウドまたはローカルストレージへ自動的に保存されます。</p>
-                
+                <p style="font-size:0.85rem; color:#8c6a5c; margin-bottom:15px;"><i
+                        class="fa-solid fa-cloud-arrow-up"></i> 投稿はクラウドまたはローカルストレージへ自動的に保存されます。</p>
+
                 <div class="input-group">
                     <label for="titleInput">今日のタイトル</label>
                     <input type="text" id="titleInput" placeholder="例：お気に入りの寝床を見つけた日">
@@ -710,6 +756,8 @@
                 <h2><i class="fa-solid fa-book-open"></i> これまでの思い出ログ</h2>
                 <div id="diaryContainer">
                     <!-- JavaScriptでここに日記が差し込まれます -->
+                    <div id="diary-list" class="mt-8 space-y-4">
+                    </div>
                 </div>
             </div>
 
@@ -740,7 +788,6 @@
     <!-- フッター -->
     <footer>
         <p>© 2026 フェレット日記 & ポートフォリオ Site All Rights Reserved.</p>
-        <p>Designed with 🐾 , Three.js and Firebase / LocalStorage</p>
     </footer>
 
     <!-- ==========================================
@@ -834,22 +881,22 @@
            ========================================== */
         let confirmSuccessCallback = null;
 
-        window.showCustomAlert = function(msg) {
+        window.showCustomAlert = function (msg) {
             document.getElementById('customAlertText').innerText = msg;
             document.getElementById('customAlertOverlay').style.display = 'flex';
         }
 
-        window.closeCustomAlert = function() {
+        window.closeCustomAlert = function () {
             document.getElementById('customAlertOverlay').style.display = 'none';
         }
 
-        window.showCustomConfirm = function(msg, callback) {
+        window.showCustomConfirm = function (msg, callback) {
             document.getElementById('customConfirmText').innerText = msg;
             confirmSuccessCallback = callback;
             document.getElementById('customConfirmOverlay').style.display = 'flex';
         }
 
-        window.closeCustomConfirm = function() {
+        window.closeCustomConfirm = function () {
             document.getElementById('customConfirmOverlay').style.display = 'none';
             confirmSuccessCallback = null;
         }
@@ -885,9 +932,9 @@
         let isNight = false;
         let raycaster = new THREE.Raycaster();
         let mouse = new THREE.Vector2();
-        
+
         // 一人称カメラ制御用の状態変数
-        let cameraRotation = { yaw: -Math.PI / 2, pitch: 0 }; 
+        let cameraRotation = { yaw: -Math.PI / 2, pitch: 0 };
         const moveSpeed = 0.08;
         const rotateSpeed = 0.025;
         let keyStates = {
@@ -935,10 +982,10 @@
             renderer.shadowMap.enabled = true;
 
             // 4. 照明の設定
-            ambientLight = new THREE.AmbientLight(0xfff5ea, 0.7); 
+            ambientLight = new THREE.AmbientLight(0xfff5ea, 0.7);
             scene.add(ambientLight);
 
-            directionalLight = new THREE.DirectionalLight(0xfffaed, 0.6); 
+            directionalLight = new THREE.DirectionalLight(0xfffaed, 0.6);
             directionalLight.position.set(0, 4.5, 0);
             directionalLight.castShadow = true;
             directionalLight.shadow.mapSize.width = 1024;
@@ -995,7 +1042,7 @@
 
             // 8. イベントとコントローラー登録
             window.addEventListener('resize', onWindowResize);
-            
+
             // キーボード操作の登録
             window.addEventListener('keydown', onKeyDown);
             window.addEventListener('keyup', onKeyUp);
@@ -1026,7 +1073,7 @@
         function buildRoom() {
             // ① 床（フローリング調）
             const floorGeo = new THREE.BoxGeometry(10, 0.1, 10);
-            const floorMat = new THREE.MeshLambertMaterial({ color: 0xd0a37e }); 
+            const floorMat = new THREE.MeshLambertMaterial({ color: 0xd0a37e });
             const floor = new THREE.Mesh(floorGeo, floorMat);
             floor.position.y = -0.05;
             floor.receiveShadow = true;
@@ -1034,7 +1081,7 @@
 
             // 絨毯（ラグ）
             const rugGeo = new THREE.BoxGeometry(4.5, 0.02, 4.5);
-            const rugMat = new THREE.MeshLambertMaterial({ color: 0xffe5d9 }); 
+            const rugMat = new THREE.MeshLambertMaterial({ color: 0xffe5d9 });
             const rug = new THREE.Mesh(rugGeo, rugMat);
             rug.position.set(0, 0.01, 0);
             rug.receiveShadow = true;
@@ -1042,7 +1089,7 @@
 
             // ② 壁（優しいクリーム色）
             const wallMat = new THREE.MeshLambertMaterial({ color: 0xfdf6ee });
-            
+
             // 奥の壁
             const backWallGeo = new THREE.BoxGeometry(10, 4, 0.2);
             const backWall = new THREE.Mesh(backWallGeo, wallMat);
@@ -1084,7 +1131,7 @@
 
             // ③ お部屋の家具
             // トンネル
-            const tunnelGeo = new THREE.CylinderGeometry(0.25, 0.25, 1.5, 16, 1, true); 
+            const tunnelGeo = new THREE.CylinderGeometry(0.25, 0.25, 1.5, 16, 1, true);
             const tunnelMat = new THREE.MeshLambertMaterial({ color: 0xddbdf6, side: THREE.DoubleSide });
             const tunnel = new THREE.Mesh(tunnelGeo, tunnelMat);
             tunnel.rotation.y = Math.PI / 4;
@@ -1187,11 +1234,11 @@
             // 足 (4本)
             const legGeo = new THREE.CylinderGeometry(0.05, 0.05, 0.25, 8);
             const legMat = new THREE.MeshLambertMaterial({ color: accentColor });
-            
+
             const legFL = new THREE.Mesh(legGeo, legMat);
             legFL.position.set(-0.3, -0.14, 0.13);
             legFL.castShadow = true;
-            
+
             const legFR = new THREE.Mesh(legGeo, legMat);
             legFR.position.set(-0.3, -0.14, -0.13);
             legFR.castShadow = true;
@@ -1223,7 +1270,7 @@
                 jumpSpeed: 0,
                 isJumping: false,
                 wiggleOffset: Math.random() * 100,
-                direction: Math.random() * Math.PI * 2, 
+                direction: Math.random() * Math.PI * 2,
                 speed: 0.015,
                 changeDirTimer: 0,
                 walkTimer: 0
@@ -1245,9 +1292,9 @@
             if (particles && isNight) {
                 const positions = particles.geometry.attributes.position.array;
                 for (let i = 1; i < positions.length; i += 3) {
-                    positions[i] -= 0.005; 
+                    positions[i] -= 0.005;
                     if (positions[i] < 0) {
-                        positions[i] = 4; 
+                        positions[i] = 4;
                     }
                 }
                 particles.geometry.attributes.position.needsUpdate = true;
@@ -1260,7 +1307,7 @@
 
                 f.changeDirTimer -= 1;
                 if (f.changeDirTimer <= 0) {
-                    f.direction += (Math.random() - 0.5) * Math.PI; 
+                    f.direction += (Math.random() - 0.5) * Math.PI;
                     f.changeDirTimer = Math.random() * 100 + 100;
                 }
 
@@ -1286,7 +1333,7 @@
                 f.legs[2].rotation.z = -Math.sin(f.walkTimer) * 0.4;
                 f.legs[3].rotation.z = Math.sin(f.walkTimer) * 0.4;
 
-                f.tail.rotation.y = Math.sin(f.walkTimer) * 0.3; 
+                f.tail.rotation.y = Math.sin(f.walkTimer) * 0.3;
 
                 const breath = Math.sin(time + f.wiggleOffset) * 0.02;
                 f.mesh.scale.set(1 + breath, 1 + breath, 1);
@@ -1437,7 +1484,7 @@
 
         function onTouchMove(event) {
             if (!isDragging || event.touches.length !== 1) return;
-            event.preventDefault(); 
+            event.preventDefault();
 
             const deltaMove = {
                 x: event.touches[0].clientX - previousMousePosition.x,
@@ -1534,26 +1581,26 @@
         function toggleDayNight() {
             const btnText = document.getElementById('daynight-text');
             const btnIcon = document.getElementById('daynight-icon');
-            
+
             isNight = !isNight;
 
             if (isNight) {
-                ambientLight.color.setHex(0x1a2130); 
-                directionalLight.color.setHex(0xffaa44); 
+                ambientLight.color.setHex(0x1a2130);
+                directionalLight.color.setHex(0xffaa44);
                 directionalLight.intensity = 0.5;
-                
-                windowLight.color.setHex(0x1d3557); 
+
+                windowLight.color.setHex(0x1d3557);
                 windowLight.intensity = 0.6;
 
-                particles.material.opacity = 0.7; 
+                particles.material.opacity = 0.7;
 
                 btnText.textContent = "昼にする";
                 btnIcon.className = "fa-solid fa-sun";
-                
+
                 let progress = 0;
                 function changeBg() {
                     progress += 0.05;
-                    scene.background.lerp(new THREE.Color(0x0a1128), progress); 
+                    scene.background.lerp(new THREE.Color(0x0a1128), progress);
                     if (progress < 1) requestAnimationFrame(changeBg);
                 }
                 changeBg();
@@ -1565,7 +1612,7 @@
                 windowLight.color.setHex(0x90e0ef);
                 windowLight.intensity = 0.4;
 
-                particles.material.opacity = 0.0; 
+                particles.material.opacity = 0.0;
 
                 btnText.textContent = "夜にする";
                 btnIcon.className = "fa-solid fa-moon";
@@ -1607,9 +1654,9 @@
             if (file) {
                 fileStatus.textContent = file.name;
                 const reader = new FileReader();
-                reader.onload = function(e) {
+                reader.onload = function (e) {
                     const img = new Image();
-                    img.onload = function() {
+                    img.onload = function () {
                         // Canvasを使って大きなスマホ写真を最大横幅800pxに自動縮小する
                         const canvas = document.createElement('canvas');
                         const max_width = 800;
@@ -1629,7 +1676,7 @@
 
                         // JPEG形式に変換して、画質品質を60%に抑え「超軽量（数十KB）」にする
                         currentImageData = canvas.toDataURL('image/jpeg', 0.6);
-                        
+
                         preview.src = currentImageData;
                         preview.style.display = 'inline-block';
                     };
@@ -1726,7 +1773,7 @@
                 diariesList.sort((a, b) => {
                     const timeA = a.createdAt || 0;
                     const timeB = b.createdAt || 0;
-                    return timeB - timeA; 
+                    return timeB - timeA;
                 });
 
                 displayDiaries(diariesList);
@@ -1812,7 +1859,7 @@
         }
 
         function escapeHTML(str) {
-            return str.replace(/[&<>'"]/g, 
+            return str.replace(/[&<>'"]/g,
                 tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
             );
         }
@@ -1822,45 +1869,69 @@
         window.addDiary = addDiary;
         let currentImageData = null;
     </script>
-   <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-  import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-  // Firebase接続設定
-  const firebaseConfig = {
-    apiKey: "AIzaSyD6casutIFylEsmhZYd09TsbMPfcyPXCYM",
-    authDomain: "ferret-diary.firebaseapp.com",
-    projectId: "ferret-diary",
-    storageBucket: "ferret-diary.firebasestorage.app",
-    messagingSenderId: "525986485012",
-    appId: "1:525986485012:web:0d7c65412cb1bae5efa801"
-  };
+        // Firebase接続設定
+        const firebaseConfig = {
+            apiKey: "AIzaSyD6casutIFylEsmhZYd09TsbMPfcyPXCYM",
+            authDomain: "ferret-diary.firebaseapp.com",
+            projectId: "ferret-diary",
+            storageBucket: "ferret-diary.firebasestorage.app",
+            messagingSenderId: "525986485012",
+            appId: "1:525986485012:web:0d7c65412cb1bae5efa801"
+        };
 
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
 
-  // 日記保存用関数
-  window.saveDiary = async () => {
-    const textarea = document.getElementById('diary-text');
-    const content = textarea.value;
+        // 日記保存用関数
+        window.saveDiary = async () => {
+            const textarea = document.getElementById('diary-text');
+            const content = textarea.value;
+
+            if (!content.trim()) {
+                alert("日記の内容を入力してください！");
+                return;
+            }
+
+            try {
+                await addDoc(collection(db, "diaries"), {
+                    content: content,
+                    date: new Date()
+                });
+                alert("日記を保存しました！");
+                textarea.value = ""; // 入力欄をクリア
+            } catch (e) {
+                console.error("保存エラー:", e);
+                alert("保存に失敗しました。コンソールを確認してください。");
+            }
+        };
+        import { getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+// 日記を表示する関数
+async function loadDiaries() {
+    const listDiv = document.getElementById('diary-list');
+    listDiv.innerHTML = "読み込み中...";
     
-    if (!content.trim()) {
-      alert("日記の内容を入力してください！");
-      return;
-    }
+    // 日付順でデータを取得
+    const q = query(collection(db, "diaries"), orderBy("date", "desc"));
+    const querySnapshot = await getDocs(q);
+    
+    listDiv.innerHTML = ""; // 一旦クリア
+    querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        const div = document.createElement('div');
+        div.className = "p-4 bg-white rounded-xl shadow-sm border";
+        div.innerHTML = `<p>${data.content}</p><small class="text-gray-400">${data.date.toDate().toLocaleString()}</small>`;
+        listDiv.appendChild(div);
+    });
+}
 
-    try {
-      await addDoc(collection(db, "diaries"), {
-        content: content,
-        date: new Date()
-      });
-      alert("日記を保存しました！");
-      textarea.value = ""; // 入力欄をクリア
-    } catch (e) {
-      console.error("保存エラー:", e);
-      alert("保存に失敗しました。コンソールを確認してください。");
-    }
-  };
-</script>
+// ページを開いた時に日記を読み込む
+loadDiaries();
+    </script>
 </body>
+
 </html>

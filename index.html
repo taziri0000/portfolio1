@@ -1664,7 +1664,6 @@
                 date: dateString,
                 title: titleInput.value,
                 content: contentInput.value,
-                image: currentImageData, 
                 createdAt: Date.now(),
                 userId: currentUser ? currentUser.uid : "offline-user"
             };
@@ -1688,7 +1687,6 @@
             titleInput.value = '';
             contentInput.value = '';
             imageInput.value = '';
-            currentImageData = '';
             preview.style.display = 'none';
             fileStatus.textContent = "画像を選択する";
 
@@ -1822,13 +1820,13 @@
         // グローバルへ公開
         window.previewImage = previewImage;
         window.addDiary = addDiary;
-
+        let currentImageData = null;
     </script>
-    <script type="module">
+   <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
   import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-  // 【重要】ここをあなたのFirebaseコンソールの値に書き換えてください
+  // Firebase接続設定
   const firebaseConfig = {
     apiKey: "AIzaSyD6casutIFylEsmhZYd09TsbMPfcyPXCYM",
     authDomain: "ferret-diary.firebaseapp.com",
@@ -1845,18 +1843,22 @@
   window.saveDiary = async () => {
     const textarea = document.getElementById('diary-text');
     const content = textarea.value;
-    if (!content) return alert("何か書いてね！");
+    
+    if (!content.trim()) {
+      alert("日記の内容を入力してください！");
+      return;
+    }
 
     try {
       await addDoc(collection(db, "diaries"), {
         content: content,
         date: new Date()
       });
-      alert("保存しました！");
+      alert("日記を保存しました！");
       textarea.value = ""; // 入力欄をクリア
     } catch (e) {
-      console.error("保存失敗:", e);
-      alert("エラーが発生しました");
+      console.error("保存エラー:", e);
+      alert("保存に失敗しました。コンソールを確認してください。");
     }
   };
 </script>

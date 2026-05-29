@@ -1824,5 +1824,41 @@
         window.addDiary = addDiary;
 
     </script>
+    <script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+  import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+  // 【重要】ここをあなたのFirebaseコンソールの値に書き換えてください
+  const firebaseConfig = {
+    apiKey: "AIzaSyD6casutIFylEsmhZYd09TsbMPfcyPXCYM",
+    authDomain: "ferret-diary.firebaseapp.com",
+    projectId: "ferret-diary",
+    storageBucket: "ferret-diary.firebasestorage.app",
+    messagingSenderId: "525986485012",
+    appId: "1:525986485012:web:0d7c65412cb1bae5efa801"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  // 日記保存用関数
+  window.saveDiary = async () => {
+    const textarea = document.getElementById('diary-text');
+    const content = textarea.value;
+    if (!content) return alert("何か書いてね！");
+
+    try {
+      await addDoc(collection(db, "diaries"), {
+        content: content,
+        date: new Date()
+      });
+      alert("保存しました！");
+      textarea.value = ""; // 入力欄をクリア
+    } catch (e) {
+      console.error("保存失敗:", e);
+      alert("エラーが発生しました");
+    }
+  };
+</script>
 </body>
 </html>

@@ -1885,43 +1885,61 @@
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
 
-// 日記を保存する関数（画像Base64保存対応版）
-  window.saveDiary = async () => {
+// 1. 保存用の関数（ボタンを押したときに動く）
+window.saveDiary = async () => {
     const textarea = document.getElementById('diary-text');
-    const imageInput = document.getElementById('imageInput'); // あなたのHTMLのIDに合わせました
+    const imageInput = document.getElementById('imageInput');
     const file = imageInput.files[0];
-    
+
     if (!textarea.value.trim()) {
-      alert("日記を入力してください！");
-      return;
+        alert("日記を入力してください！");
+        return;
     }
 
-    // 画像が選ばれている場合のみ変換する
     if (file) {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = async () => {
-        const base64Image = reader.result;
-        
-        await addDoc(collection(db, "diaries"), {
-          content: textarea.value,
-          image: base64Image, // 画像そのものを文字列として保存
-          date: new Date()
-        });
-        alert("画像つきで保存しました！");
-        location.reload();
-      };
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = async () => {
+            await addDoc(collection(db, "diaries"), {
+                content: textarea.value,
+                image: reader.result,
+                date: new Date()
+            });
+            alert("保存しました！");
+            location.reload();
+        };
     } else {
-      // 画像がない場合
-      await addDoc(collection(db, "diaries"), {
-        content: textarea.value,
-        image: "",
-        date: new Date()
-      });
-      alert("保存しました！");
-      location.reload();
+        await addDoc(collection(db, "diaries"), {
+            content: textarea.value,
+            image: "",
+            date: new Date()
+        });
+        alert("保存しました！");
+        location.reload();
     }
-  };</script>
+};
+
+// 2. 読み込み用の処理（ページを開いた瞬間に自動で動く）
+// ※saveDiaryの「外」に書くのがポイントです！
+window.addEventListener('DOMContentLoaded', async () => {
+    const container = document.getElementById('diary-list');
+    if (!container) return; // 念のため、表示場所があるかチェック
+
+    const querySnapshot = await getDocs(collection(db, "diaries"));
+    
+    querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        const div = document.createElement('div');
+        
+        // 日記の内容と画像をHTMLに追加
+        div.innerHTML = `
+            <p>${data.content}</p>
+            ${data.image ? `<img src="${data.image}" style="width:200px;">` : ''}
+            <hr>
+        `;
+        container.appendChild(div);
+    });
+});</script>
 </body>
 
 </html>

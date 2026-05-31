@@ -756,10 +756,12 @@
                 <h2><i class="fa-solid fa-book-open"></i> これまでの思い出ログ</h2>
                 <div id="diaryContainer">
                     <!-- JavaScriptでここに日記が差し込まれます -->
-                    <div id="diary-list" class="mt-8 space-y-4">
-                    </div>
+                    <input type="text" id="image-url" placeholder="画像のURLをここに貼り付けてね"
+                        class="w-full p-2 border rounded mb-2">
                 </div>
             </div>
+        </div>
+        <div id="diary-list" class="mt-8 space-y-4">
 
         </div>
     </section>
@@ -795,10 +797,8 @@
        ========================================== -->
     <script type="module">
         // Firebase SDK のインポート
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, doc, addDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         /* ==========================================
            【最重要】Firebaseに繋いで誰でも見れるようにするための設定
            ==========================================
@@ -1869,69 +1869,59 @@
         window.addDiary = addDiary;
         let currentImageData = null;
     </script>
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+  import { getFirestore, collection, addDoc, query, orderBy, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // Firebase接続設定
-        const firebaseConfig = {
-            apiKey: "AIzaSyD6casutIFylEsmhZYd09TsbMPfcyPXCYM",
-            authDomain: "ferret-diary.firebaseapp.com",
-            projectId: "ferret-diary",
-            storageBucket: "ferret-diary.firebasestorage.app",
-            messagingSenderId: "525986485012",
-            appId: "1:525986485012:web:0d7c65412cb1bae5efa801"
-        };
+  const firebaseConfig = {
+    apiKey: "AIzaSyD6casutIFylEsmhZYd09TsbMPfcyPXCYM",
+    authDomain: "ferret-diary.firebaseapp.com",
+    projectId: "ferret-diary",
+    storageBucket: "ferret-diary.firebasestorage.app",
+    messagingSenderId: "525986485012",
+    appId: "1:525986485012:web:0d7c65412cb1bae5efa801"
+  };
 
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
 
-        // 日記保存用関数
-        window.saveDiary = async () => {
-            const textarea = document.getElementById('diary-text');
-            const content = textarea.value;
-
-            if (!content.trim()) {
-                alert("日記の内容を入力してください！");
-                return;
-            }
-
-            try {
-                await addDoc(collection(db, "diaries"), {
-                    content: content,
-                    date: new Date()
-                });
-                alert("日記を保存しました！");
-                textarea.value = ""; // 入力欄をクリア
-            } catch (e) {
-                console.error("保存エラー:", e);
-                alert("保存に失敗しました。コンソールを確認してください。");
-            }
-        };
-        import { getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
-// 日記を表示する関数
-async function loadDiaries() {
-    const listDiv = document.getElementById('diary-list');
-    listDiv.innerHTML = "読み込み中...";
+// 日記を保存する関数（画像Base64保存対応版）
+  window.saveDiary = async () => {
+    const textarea = document.getElementById('diary-text');
+    const imageInput = document.getElementById('imageInput'); // あなたのHTMLのIDに合わせました
+    const file = imageInput.files[0];
     
-    // 日付順でデータを取得
-    const q = query(collection(db, "diaries"), orderBy("date", "desc"));
-    const querySnapshot = await getDocs(q);
-    
-    listDiv.innerHTML = ""; // 一旦クリア
-    querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        const div = document.createElement('div');
-        div.className = "p-4 bg-white rounded-xl shadow-sm border";
-        div.innerHTML = `<p>${data.content}</p><small class="text-gray-400">${data.date.toDate().toLocaleString()}</small>`;
-        listDiv.appendChild(div);
-    });
-}
+    if (!textarea.value.trim()) {
+      alert("日記を入力してください！");
+      return;
+    }
 
-// ページを開いた時に日記を読み込む
-loadDiaries();
-    </script>
+    // 画像が選ばれている場合のみ変換する
+    if (file) {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = async () => {
+        const base64Image = reader.result;
+        
+        await addDoc(collection(db, "diaries"), {
+          content: textarea.value,
+          image: base64Image, // 画像そのものを文字列として保存
+          date: new Date()
+        });
+        alert("画像つきで保存しました！");
+        location.reload();
+      };
+    } else {
+      // 画像がない場合
+      await addDoc(collection(db, "diaries"), {
+        content: textarea.value,
+        image: "",
+        date: new Date()
+      });
+      alert("保存しました！");
+      location.reload();
+    }
+  };</script>
 </body>
 
 </html>

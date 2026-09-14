@@ -234,7 +234,7 @@
         <h1>アド・チェイス：大逃走サバイバル</h1>
         <p>【ルール】<br>
            広大なサイバー都市を舞台に、あなたをめがけて追尾してくる**「リアルなバナー広告」**から逃げ切れ！<br>
-           主人公の移動速度をアップしました。素早く走り回って広告を振り切れ！<br>
+           主人公の移動速度を超特急（45.0）に引き上げました！軽快に走り回って広告を圧倒しよう！<br>
            **合計3回捕まえるとゲームオーバーです！**</p>
         <button class="btn" onclick="startGame()">逃走開始</button>
     </div>
@@ -585,9 +585,9 @@
             direction.x = Number(moveRight) - Number(moveLeft);
             direction.normalize();
 
-            // 【調整】主人公の移動速度をアップ（16.0 → 26.0）
-            if (moveForward || moveBackward) velocity.z -= direction.z * 26.0 * delta;
-            if (moveLeft || moveRight) velocity.x -= direction.x * 26.0 * delta;
+            // 【調整】主人公の移動速度を超特急に大幅アップ（26.0 → 45.0）
+            if (moveForward || moveBackward) velocity.z -= direction.z * 45.0 * delta;
+            if (moveLeft || moveRight) velocity.x -= direction.x * 45.0 * delta;
 
             camera.translateX(-velocity.x * delta);
             camera.translateZ(-velocity.z * delta);

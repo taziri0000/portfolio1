@@ -1,407 +1,634 @@
 <!DOCTYPE html>
 <html lang="ja">
-
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="robots" content="noindex, nofollow">
-    <link rel="icon" href="images/port16*16.ico" sizes="16x16" type="image/x-icon">
-    <link rel="icon" href="images/port24*24.ico" sizes="24x24" type="image/x-icon">
-    <link rel="icon" href="images/port32*32.ico" sizes="32x32" type="image/x-icon">
-
-    <link rel="apple-touch-icon" href="apple-touch-icon-180x180.png">
-
-    <title>Yuki Nakaminami | Portfolio</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>アド・チェイス：大逃走サバイバル</title>
     <style>
-        * {
-            box-sizing: border-box;
+        body {
             margin: 0;
             padding: 0;
-        }
-
-        body {
+            background: #000;
+            color: #fff;
             font-family: 'Helvetica Neue', Arial, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            max-width: 1000px;
-            margin: 0 auto;
-            padding: 3vh;
-        }
-
-
-
-
-
-
-
-        /* セクション共通 */
-        section {
-            margin-bottom: 80px;
-        }
-
-        h1 {
-            font-size: 3rem;
-            margin-bottom: 20px;
-        }
-
-        h2 {
-            font-size: 1.5rem;
-            margin-bottom: 20vh;
-            border-bottom: 3px solid #eee;
-            padding-bottom: 10px;
-        }
-
-        /* プロフィール用グリッド */
-        .profile-grid {
-            display: grid;
-            grid-template-columns: 4fr 2fr;
-            gap: 40px;
-        }
-
-        .image-placeholder img {
-            display: block;
-            width: 100%;
-            height: auto;
-        }
-
-        /* 作品一覧用グリッド */
-        .work-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 30px;
-        }
-
-        /* 各要素 */
-        .work-item {
-            border: 1px solid #f0f0f0;
-            padding: 20px;
-        }
-
-        .image-placeholder {
-            width: 100%;
-            height: 200px;
-            background: #f9f9f9;
-            margin-bottom: 20vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .image-placeholder a:hover {
-            transition: 0.5s;
-            scale: 1.2;
-        }
-
-        .skill-list {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-
-        .skill-tag {
-            background: #eee;
-            padding: 5px 15px;
-            border-radius: 20px;
-            font-size: 0.9rem;
-        }
-
-        .slideshow-wrap {
-            display: flex;
-            gap: 30px;
-            justify-content: center;
-            flex-wrap: wrap;
-            margin-top: 20px;
-        }
-
-        .slideshow-block {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 8px;
-        }
-
-        /* 共通スライダー */
-        .slideshow {
-            position: relative;
             overflow: hidden;
-            border-radius: 12px;
-            background: #111;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: none;
         }
 
-        /* A4縦 */
-        .a4-portrait {
-            width: 480px;
-            aspect-ratio: 210 / 297;
+        #canvas-container {
+            width: 100vw;
+            height: 100vh;
+            display: block;
         }
 
-        /* A4横 */
-        .a4-landscape {
-            width: 800px;
-            aspect-ratio: 297 / 210;
-        }
-
-        /* 画像 */
-        .slideshow img {
+        /* HUD（ヘッドアップディスプレイ） */
+        #hud {
             position: absolute;
+            top: 0;
+            left: 0;
             width: 100%;
             height: 100%;
-            object-fit: cover;
-            opacity: 0;
-            transition: opacity 0.6s ease;
-        }
-
-        .slideshow img.active {
-            opacity: 1;
-        }
-
-        /* ボタン（左右） */
-        .slideshow button {
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-            background: rgba(0, 0, 0, 0.5);
-            color: #fff;
-            border: none;
-            font-size: 22px;
-            padding: 6px 10px;
-            cursor: pointer;
+            pointer-events: none;
+            box-sizing: border-box;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
             z-index: 10;
         }
 
-        .prev {
-            left: 8px;
+        .hud-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
         }
 
-        .next {
-            right: 8px;
+        .cyber-panel {
+            background: rgba(0, 20, 40, 0.85);
+            border: 2px solid #ff0055;
+            box-shadow: 0 0 15px rgba(255, 0, 85, 0.5);
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 13px;
+            text-shadow: 0 0 5px #ff0055;
         }
 
-        /* AUTOボタン（外） */
-        .auto-toggle {
-            font-size: 12px;
-            padding: 4px 10px;
-            background: transparent;
-            color: #666;
-            border: 1px solid #aaa;
-            border-radius: 20px;
-            cursor: pointer;
-            transition: 0.2s;
+        /* 広告強制ポップアップ（ミッション画面） */
+        #ad-modal {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            padding: 20px;
+            box-sizing: border-box;
+            pointer-events: auto;
         }
 
-        .auto-toggle:hover {
-            background: #111;
+        .ad-box {
+            background: linear-gradient(135deg, #ff0055, #ffaa00);
+            border: 4px solid #fff;
+            box-shadow: 0 0 30px rgba(255, 0, 85, 0.9);
+            border-radius: 12px;
+            padding: 25px;
+            max-width: 450px;
+            width: 100%;
+            color: #000;
+            text-align: center;
+            position: relative;
+        }
+
+        .ad-box h2 {
+            margin-top: 0;
             color: #fff;
-            border-color: #111;
+            text-shadow: 0 0 5px #000;
+            font-size: 20px;
         }
 
-
-
-
-
-
-
-
-        @media screen and (max-width:800px) {
-
-            .profile-grid {
-                display: block;
-            }
-
+        .ad-box p {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 10px;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 14px;
+            color: #111;
         }
 
-        @media screen and (max-width:780px) {
-            .a4-portrait {
-                width: 260px;
-                aspect-ratio: 210 / 297;
-            }
-
-            /* A4横 */
-            .a4-landscape {
-                width: 380px;
-                aspect-ratio: 297 / 210;
-            }
-
-
+        .ad-btn {
+            background: #ffff00;
+            border: 3px solid #000;
+            color: #000;
+            padding: 14px 20px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 6px;
+            width: 100%;
+            margin-top: 15px;
+            box-shadow: 0 4px 0 #886600;
+            -webkit-tap-highlight-color: transparent;
         }
+        .ad-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 #886600; }
+
+        /* スマホ用バーチャルパッド */
+        #mobile-controls {
+            position: absolute;
+            bottom: 20px;
+            left: 0;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 20px;
+            box-sizing: border-box;
+            pointer-events: none;
+            z-index: 20;
+        }
+
+        .virtual-pad {
+            width: 130px;
+            height: 130px;
+            background: rgba(255, 255, 255, 0.15);
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            border-radius: 50%;
+            pointer-events: auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            touch-action: none;
+        }
+
+        .virtual-stick {
+            width: 55px;
+            height: 55px;
+            background: rgba(255, 0, 85, 0.8);
+            border: 2px solid #fff;
+            border-radius: 50%;
+            position: absolute;
+            pointer-events: none;
+            transition: transform 0.05s linear;
+        }
+
+        #overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(2, 5, 15, 0.95);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            text-align: center;
+            padding: 20px;
+            box-sizing: border-box;
+            pointer-events: auto;
+        }
+
+        h1 { margin: 0 0 10px 0; color: #ff0055; font-size: 24px; text-shadow: 0 0 15px rgba(255,0,85,0.7); }
+        p { margin: 10px 0 25px 0; color: #aaccff; font-size: 13px; line-height: 1.6; max-width: 600px; }
+
+        .btn {
+            background: #ff0055;
+            color: #fff;
+            border: none;
+            padding: 14px 40px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 4px;
+            box-shadow: 0 0 20px rgba(255,0,85,0.6);
+            -webkit-tap-highlight-color: transparent;
+        }
+        .btn:hover { background: #ff3377; }
     </style>
 </head>
-
 <body>
 
-    <header>
-        <h1>Yuki Nakaminami</h1>
-        <p>Web Designer & Developer</p>
-    </header>
+    <div id="canvas-container"></div>
 
-    <section id="profile">
-        <h2>Profile</h2>
-        <div class="profile-grid">
-            <div class="image-placeholder">
-                <img src="images/me.PNG" alt="">
+    <div id="hud">
+        <div class="hud-top">
+            <div class="cyber-panel">
+                <div id="lives">広告被弾数: 0 / 3回</div>
+                <div id="survive-timer" style="margin-top: 4px; color: #00ffcc;">生存タイム: 0.00秒</div>
             </div>
-            <div>
-                <p>初めまして。
-                    中南雄貴です。<br>
-                    私の経歴は物流で事務を7年した後にECサイトでの運営事務を2年半した後、
-                    職業訓練校に入学してWEBデザイナーを目指すこととなる。</p>
+            <div class="cyber-panel" id="controls-hint">
+                [W,A,S,D] 移動 ｜ [マウスドラッグ or 右側スワイプ] 視点変更
             </div>
         </div>
-    </section>
+    </div>
 
-    <section id="skills">
-        <h2>Skills</h2>
-        <div class="skill-list">
-            <span class="skill-tag">Web Design</span>
-            <span class="skill-tag">Video Editing</span>
-            <span class="skill-tag">Spreadsheet Automation</span>
-            <span class="skill-tag">Micro Soft Office Excell</span>
-            <span class="skill-tag">HTML/CSS</span>
-            <span class="skill-tag">java script</span>
-            <span class="skill-tag">Photshop</span>
-            <span class="skill-tag">Illustrator</span>
-            <span class="skill-tag">canva</span>
-            <span class="skill-tag">figma</span>
-
-
-
+    <!-- 広告強制ポップアップ（解除ミッション） -->
+    <div id="ad-modal">
+        <div class="ad-box">
+            <div style="background:#000; color:#fff; padding:4px 8px; font-size:10px; margin-bottom:10px; font-weight:bold; display:flex; justify-content:space-between;">
+                <span>⚠️ TRAPPED BY ADVERTISEMENT</span><span>[PR]</span>
+            </div>
+            <h2 id="ad-title">怪しい副業への参加</h2>
+            <p id="ad-desc">広告に捕まりました！ボタン連打で広告を振り払え！（3回タップ）</p>
+            <div id="ad-progress" style="margin: 10px 0; font-family: monospace; font-weight: bold; color: #fff; text-shadow:0 0 3px #000;">残り連打数: 3回</div>
+            <button class="ad-btn" id="ad-action-btn" onclick="handleAdMissionAction()">広告を連打して閉じる！</button>
         </div>
+    </div>
 
-    </section>
-
-    <section id="works">
-        <h2>Works</h2>
-        <div class="work-grid">
-            <!-- 作品項目 -->
-　
-            <div class="work-item">
-                <div class="image-placeholder">
-                    <a href="https://taziri0000.github.io/rice_farmer_portfolio/" target="_blank"><img
-                            src="images/site-02.jpg" alt="portfolio-site02"></a>
-                </div>
-                <h3>米作り農家のサイト</h3>
-                <p>ポートフォリオのために作った架空の米農家のサイト。制作期間２日
-                </p>
-                <a href="farmer.html"
-                    style="display:inline-block; margin-top:10px; color:#007bff; text-decoration:underline;">設計意図とコンセプトを見る</a>
-            </div>
-            <div class="work-item">
-                <div class="image-placeholder">
-                    <a href="https://taziri0000.github.io/administrative-scrivener_portfolio/" target="_blank"><img
-                            src="images/site-03.jpg" alt="ortfolio-site03"></a>
-                </div>
-                <h3>行政書士事務所のサイト</h3>
-                <p>ポートフォリオのために作った架空の行政書士事務所のサイトです。制作時間は３日程です。
-                </p>
-                <!-- index_2.html の該当箇所に追加 -->
-                <a href="law.html"
-                    style="display:block; margin-top:10px; color:#007bff; text-decoration:underline;">サイトの設計意図（コンセプト詳細）はこちら</a>
-            </div>
+    <!-- スマホ用バーチャルパッド -->
+    <div id="mobile-controls">
+        <div id="joy-pad" class="virtual-pad">
+            <div id="joy-stick" class="virtual-stick"></div>
         </div>
-    </section>
+    </div>
 
+    <div id="overlay">
+        <h1>アド・チェイス：大逃走サバイバル</h1>
+        <p>【ルール】<br>
+           広大なサイバー都市を舞台に、あなたをめがけて追尾してくる**「リアルなバナー広告」**から逃げ切れ！<br>
+           主人公の移動速度をアップしました。素早く走り回って広告を振り切れ！<br>
+           **合計3回捕まえるとゲームオーバーです！**</p>
+        <button class="btn" onclick="startGame()">逃走開始</button>
+    </div>
 
-
-
-
-    <section id="gallery">
-        <h2>gallery</h2>
-        <p>今まで作ってきたバナーやチラシのギャラリー集。もっとこれから増やしていく予定です。</p>
-
-        <div class="slideshow-wrap">
-
-            <!-- A4縦 -->
-            <div class="slideshow-block">
-                <div class="slideshow a4-portrait">
-                    <img src="images/port1.jpg" class="active">
-                    <img src="images/port2.jpg">
-                    <img src="images/port3.jpg">
-                    <img src="images/port4.jpg">
-
-
-                    <button class="prev">‹</button>
-                    <button class="next">›</button>
-                </div>
-                <button class="auto-toggle">AUTO: OFF</button>
-            </div>
-
-            <!-- A4横 -->
-            <div class="slideshow-block">
-                <div class="slideshow a4-landscape">
-                    <img src="images/port01.jpg" class="active">
-                    <img src="images/port03.jpg">
-                    <img src="images/port05.jpg">
-
-                    <button class="prev">‹</button>
-                    <button class="next">›</button>
-                </div>
-                <button class="auto-toggle">AUTO: OFF</button>
-            </div>
-
-        </div>
-    </section>
-
-
-
-    <section id="contact">
-        <h2>Contact</h2>
-        <p>お仕事のご相談やご質問は、以下のメールアドレスまでお気軽にご連絡ください。</p>
-        <p><strong>test-website@email.com</strong></p>
-    </section>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
     <script>
-        function initSlideshow(block) {
-            const slider = block.querySelector(".slideshow");
-            const images = slider.querySelectorAll("img");
-            const prev = slider.querySelector(".prev");
-            const next = slider.querySelector(".next");
-            const autoBtn = block.querySelector(".auto-toggle");
+        let scene, camera, renderer;
+        let gameActive = false;
+        let hitCount = 0; 
+        let surviveTime = 0;
+        let startTime = 0;
+        let animationFrameId = null;
 
-            let index = 0;
-            let timer = null;
-            let isAuto = false;
+        let moveForward = false, moveBackward = false, moveLeft = false, moveRight = false;
+        let velocity = new THREE.Vector3();
+        let direction = new THREE.Vector3();
+        let prevTime = performance.now();
 
-            function show(i) {
-                images.forEach(img => img.classList.remove("active"));
-                images[i].classList.add("active");
-            }
+        let euler = new THREE.Euler(0, 0, 0, 'YXZ');
+        const PI_2 = Math.PI / 2;
 
-            function startAuto() {
-                timer = setInterval(() => {
-                    index = (index + 1) % images.length;
-                    show(index);
-                }, 3000);
+        let chasingAds = [];
+        let missionCounter = 0;
+        let activeAdIndex = null;
 
-                isAuto = true;
-                autoBtn.textContent = "AUTO: ON";
-            }
+        // 広告テクスチャの生成
+        const adImageUrls = [
+            generateAdCanvas("【PR】今すぐ月収300万円！", "怪しい副業への第一歩", "#ff0055", 3),
+            generateAdCanvas("【警告】ウイルス感染検出", "今すぐスキャンボタンを押せ", "#ffcc00", 4),
+            generateAdCanvas("出会い系：近くに美少女！", "無料で今すぐチャット開始", "#00f0ff", 3),
+            generateAdCanvas("絶対に閉じるボタンが小さい詐欺", "プレミアム会員へ強制登録", "#9900ff", 5),
+            generateAdCanvas("3秒でハゲが治る謎のサプリ", "今だけ90%OFFで大セール", "#00ff66", 3)
+        ];
 
-            function stopAuto() {
-                clearInterval(timer);
-                timer = null;
-                isAuto = false;
-                autoBtn.textContent = "AUTO: OFF";
-            }
+        function generateAdCanvas(title, sub, bgColor, count) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 512;
+            canvas.height = 256;
+            const ctx = canvas.getContext('2d');
 
-            prev.addEventListener("click", () => {
-                index = (index - 1 + images.length) % images.length;
-                show(index);
-            });
+            ctx.fillStyle = bgColor;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            next.addEventListener("click", () => {
-                index = (index + 1) % images.length;
-                show(index);
-            });
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 10;
+            ctx.strokeRect(0, 0, canvas.width, canvas.height);
 
-            autoBtn.addEventListener("click", () => {
-                isAuto ? stopAuto() : startAuto();
-            });
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(20, 20, 140, 30);
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 16px sans-serif';
+            ctx.fillText('MANDATORY AD', 30, 40);
 
-            show(index);
+            ctx.fillStyle = '#000000';
+            ctx.font = 'bold 26px sans-serif';
+            ctx.fillText(title, 20, 95);
+
+            ctx.fillStyle = '#222222';
+            ctx.font = '18px sans-serif';
+            ctx.fillText(sub, 20, 135);
+
+            ctx.fillStyle = '#ffff00';
+            ctx.fillRect(20, 165, 220, 55);
+            ctx.fillStyle = '#000000';
+            ctx.font = 'bold 20px sans-serif';
+            ctx.fillText('解除ミッションあり', 30, 201);
+
+            return { canvas, count, title, sub };
         }
 
-        document.querySelectorAll(".slideshow-block").forEach(initSlideshow);
+        function init() {
+            const container = document.getElementById('canvas-container');
+
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x02050e);
+            scene.fog = new THREE.FogExp2(0x02050e, 0.012);
+
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 1.7, 0);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            container.appendChild(renderer.domElement);
+
+            const ambientLight = new THREE.AmbientLight(0xffffff, 1.2);
+            scene.add(ambientLight);
+
+            buildOpenWorldCity();
+            window.addEventListener('resize', onWindowResize);
+            setupInput();
+        }
+
+        function buildOpenWorldCity() {
+            // 広大な床（150m x 150m）
+            const floorGeo = new THREE.PlaneGeometry(150, 150);
+            const floorMat = new THREE.MeshStandardMaterial({ color: 0x0a0a14, roughness: 0.9 });
+            const floor = new THREE.Mesh(floorGeo, floorMat);
+            floor.rotation.x = -Math.PI / 2;
+            scene.add(floor);
+
+            // ビル群
+            for (let i = 0; i < 25; i++) {
+                let w = 6 + Math.random() * 8;
+                let h = 10 + Math.random() * 20;
+                let d = 6 + Math.random() * 8;
+                let bGeo = new THREE.BoxGeometry(w, h, d);
+                let bMat = new THREE.MeshStandardMaterial({ color: 0x112233, roughness: 0.7 });
+                let building = new THREE.Mesh(bGeo, bMat);
+
+                let x = (Math.random() - 0.5) * 120;
+                let z = (Math.random() - 0.5) * 120;
+                if (Math.abs(x) < 15 && Math.abs(z) < 15) continue;
+
+                building.position.set(x, h / 2, z);
+                scene.add(building);
+            }
+        }
+
+        function spawnChasingAds() {
+            chasingAds.forEach(a => scene.remove(a.mesh));
+            chasingAds = [];
+
+            for (let i = 0; i < 4; i++) {
+                let angle = (i / 4) * Math.PI * 2;
+                let dist = 28; 
+                let xPos = Math.cos(angle) * dist;
+                let zPos = Math.sin(angle) * dist;
+                let yPos = 1.7;
+
+                let adInfo = adImageUrls[Math.floor(Math.random() * adImageUrls.length)];
+                let texture = new THREE.CanvasTexture(adInfo.canvas);
+                let adGeo = new THREE.PlaneGeometry(4, 2.4);
+                let adMat = new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide });
+                let adMesh = new THREE.Mesh(adGeo, adMat);
+                adMesh.position.set(xPos, yPos, zPos);
+                scene.add(adMesh);
+
+                chasingAds.push({
+                    mesh: adMesh,
+                    speed: 2.2 + Math.random() * 0.6,
+                    info: adInfo
+                });
+            }
+        }
+
+        function setupInput() {
+            // キーボード操作
+            document.addEventListener('keydown', (e) => {
+                if (!gameActive) return;
+                if (e.code === 'KeyW' || e.code === 'ArrowUp') moveForward = true;
+                if (e.code === 'KeyS' || e.code === 'ArrowDown') moveBackward = true;
+                if (e.code === 'KeyA' || e.code === 'ArrowLeft') moveLeft = true;
+                if (e.code === 'KeyD' || e.code === 'ArrowRight') moveRight = true;
+            });
+
+            document.addEventListener('keyup', (e) => {
+                if (e.code === 'KeyW' || e.code === 'ArrowUp') moveForward = false;
+                if (e.code === 'KeyS' || e.code === 'ArrowDown') moveBackward = false;
+                if (e.code === 'KeyA' || e.code === 'ArrowLeft') moveLeft = false;
+                if (e.code === 'KeyD' || e.code === 'ArrowRight') moveRight = false;
+            });
+
+            // PCマウス視点（ドラッグ操作）
+            let isMouseDown = false;
+            let lastMouseX = 0, lastMouseY = 0;
+
+            document.addEventListener('mousedown', (e) => {
+                if (!gameActive) return;
+                isMouseDown = true;
+                lastMouseX = e.clientX;
+                lastMouseY = e.clientY;
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (!gameActive || !isMouseDown) return;
+                let dx = e.clientX - lastMouseX;
+                let dy = e.clientY - lastMouseY;
+                euler.y -= dx * 0.003;
+                euler.x -= dy * 0.003;
+                euler.x = Math.max(-PI_2, Math.min(PI_2, euler.x));
+                camera.quaternion.setFromEuler(euler);
+                lastMouseX = e.clientX;
+                lastMouseY = e.clientY;
+            });
+
+            document.addEventListener('mouseup', () => { isMouseDown = false; });
+
+            // スマホ用バーチャルパッド
+            const joyPad = document.getElementById('joy-pad');
+            const joyStick = document.getElementById('joy-stick');
+            let joyTouchId = null;
+            let joyCenter = { x: 0, y: 0 };
+
+            joyPad.addEventListener('pointerdown', (e) => {
+                joyTouchId = e.pointerId;
+                const rect = joyPad.getBoundingClientRect();
+                joyCenter = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+                joyPad.setPointerCapture(e.pointerId);
+                updateJoy(e.clientX, e.clientY);
+            });
+
+            joyPad.addEventListener('pointermove', (e) => {
+                if (e.pointerId !== joyTouchId) return;
+                updateJoy(e.clientX, e.clientY);
+            });
+
+            const resetJoy = (e) => {
+                if (e.pointerId === joyTouchId) {
+                    joyTouchId = null;
+                    moveForward = moveBackward = moveLeft = moveRight = false;
+                    joyStick.style.transform = `translate(0px, 0px)`;
+                }
+            };
+            joyPad.addEventListener('pointerup', resetJoy);
+            joyPad.addEventListener('pointercancel', resetJoy);
+
+            function updateJoy(cx, cy) {
+                let dx = cx - joyCenter.x;
+                let dy = cy - joyCenter.y;
+                let dist = Math.hypot(dx, dy);
+                let maxDist = 40;
+                if (dist > maxDist) {
+                    dx = (dx / dist) * maxDist;
+                    dy = (dy / dist) * maxDist;
+                }
+                joyStick.style.transform = `translate(${dx}px, ${dy}px)`;
+                moveForward = dy < -10;
+                moveBackward = dy > 10;
+                moveLeft = dx < -10;
+                moveRight = dx > 10;
+            }
+
+            // スマホ画面右側スワイプ視点
+            let lookTouchId = null;
+            let lastX = 0, lastY = 0;
+            document.addEventListener('pointerdown', (e) => {
+                if (!gameActive || e.clientX < window.innerWidth / 2 || e.target.closest('#ad-modal')) return;
+                lookTouchId = e.pointerId;
+                lastX = e.clientX;
+                lastY = e.clientY;
+            });
+            document.addEventListener('pointermove', (e) => {
+                if (e.pointerId !== lookTouchId || !gameActive) return;
+                let dx = e.clientX - lastX;
+                let dy = e.clientY - lastY;
+                euler.y -= dx * 0.005;
+                euler.x -= dy * 0.005;
+                euler.x = Math.max(-PI_2, Math.min(PI_2, euler.x));
+                camera.quaternion.setFromEuler(euler);
+                lastX = e.clientX;
+                lastY = e.clientY;
+            });
+            const endLook = (e) => { if (e.pointerId === lookTouchId) lookTouchId = null; };
+            document.addEventListener('pointerup', endLook);
+            document.addEventListener('pointercancel', endLook);
+        }
+
+        function startGame() {
+            document.getElementById('overlay').style.display = 'none';
+            gameActive = true;
+            hitCount = 0;
+            startTime = performance.now();
+            prevTime = performance.now();
+            camera.position.set(0, 1.7, 0);
+            euler.set(0, 0, 0);
+
+            moveForward = moveBackward = moveLeft = moveRight = false;
+
+            spawnChasingAds();
+            updateHUD();
+            
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+            animate();
+        }
+
+        function updateHUD() {
+            document.getElementById('lives').innerText = `広告被弾数: ${hitCount} / 3回`;
+        }
+
+        function triggerAdMission(adIndex) {
+            gameActive = false;
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
+
+            activeAdIndex = adIndex;
+            let ad = chasingAds[adIndex];
+            missionCounter = ad.info.count;
+
+            document.getElementById('ad-title').innerText = ad.info.title;
+            document.getElementById('ad-desc').innerText = `広告に捕まりました！「${ad.info.sub}」を解除するためボタンを連打してください！`;
+            document.getElementById('ad-progress').innerText = `残り連打数: ${missionCounter}回`;
+            document.getElementById('ad-modal').style.display = 'flex';
+        }
+
+        function handleAdMissionAction() {
+            missionCounter--;
+            document.getElementById('ad-progress').innerText = `残り連打数: ${missionCounter}回`;
+
+            if (missionCounter <= 0) {
+                document.getElementById('ad-modal').style.display = 'none';
+                hitCount++;
+                updateHUD();
+
+                let angle = Math.random() * Math.PI * 2;
+                chasingAds[activeAdIndex].mesh.position.x = camera.position.x + Math.cos(angle) * 35;
+                chasingAds[activeAdIndex].mesh.position.z = camera.position.z + Math.sin(angle) * 35;
+
+                if (hitCount >= 3) {
+                    gameOver();
+                } else {
+                    gameActive = true;
+                    prevTime = performance.now();
+                    animate();
+                }
+            }
+        }
+
+        function gameOver() {
+            gameActive = false;
+            const overlay = document.getElementById('overlay');
+            overlay.style.display = 'flex';
+            overlay.innerHTML = `
+                <h1 style="color:#ff3333;">💥 広告に3回捕まりました！ 💥</h1>
+                <p>広大な街中を逃げ回りましたが、執拗な広告の連打地獄に追いつかれてしまいました……。<br>生存タイム: ${surviveTime.toFixed(2)}秒</p>
+                <button class="btn" onclick="startGame()">もう一度挑戦する</button>
+            `;
+        }
+
+        function animate() {
+            if (!gameActive) return;
+            animationFrameId = requestAnimationFrame(animate);
+
+            const time = performance.now();
+            const delta = Math.min((time - prevTime) / 1000, 0.1);
+            prevTime = time;
+
+            surviveTime = (time - startTime) / 1000;
+            document.getElementById('survive-timer').innerText = `生存タイム: ${surviveTime.toFixed(2)}秒`;
+
+            // プレイヤーの移動処理
+            velocity.x -= velocity.x * 10.0 * delta;
+            velocity.z -= velocity.z * 10.0 * delta;
+
+            direction.z = Number(moveForward) - Number(moveBackward);
+            direction.x = Number(moveRight) - Number(moveLeft);
+            direction.normalize();
+
+            // 【調整】主人公の移動速度をアップ（16.0 → 26.0）
+            if (moveForward || moveBackward) velocity.z -= direction.z * 26.0 * delta;
+            if (moveLeft || moveRight) velocity.x -= direction.x * 26.0 * delta;
+
+            camera.translateX(-velocity.x * delta);
+            camera.translateZ(-velocity.z * delta);
+
+            // マップの境界制限（150m四方）
+            camera.position.x = Math.max(-70, Math.min(70, camera.position.x));
+            camera.position.z = Math.max(-70, Math.min(70, camera.position.z));
+
+            // 広告がプレイヤーを追跡
+            for (let i = 0; i < chasingAds.length; i++) {
+                let ad = chasingAds[i];
+                let adPos = ad.mesh.position;
+
+                let dirX = camera.position.x - adPos.x;
+                let dirZ = camera.position.z - adPos.z;
+                let dist = Math.hypot(dirX, dirZ);
+
+                if (dist > 0.1) {
+                    adPos.x += (dirX / dist) * ad.speed * delta;
+                    adPos.z += (dirZ / dist) * ad.speed * delta;
+                }
+
+                ad.mesh.lookAt(camera.position.x, adPos.y, camera.position.z);
+
+                // 接触判定
+                if (dist < 1.8) {
+                    triggerAdMission(i);
+                    return;
+                }
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        window.onload = init;
     </script>
 </body>
-
 </html>

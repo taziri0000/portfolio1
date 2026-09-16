@@ -203,9 +203,10 @@
             <div class="cyber-panel">
                 <div id="lives">広告被弾数: 0 / 3回</div>
                 <div id="survive-timer" style="margin-top: 4px; color: #00ffcc;">生存タイム: 0.00秒</div>
+                <div id="ad-count-hud" style="margin-top: 4px; color: #ffcc00;">追跡広告数: 4体</div>
             </div>
             <div class="cyber-panel" id="controls-hint">
-                [W,A,S,D] 移動 ｜ [マウスドラッグ or 右側スワイプ] 視点変更
+                [W,A,S,D] 地上移動 ｜ [マウスドラッグ or 右側スワイプ] 視点変更
             </div>
         </div>
     </div>
@@ -233,9 +234,9 @@
     <div id="overlay">
         <h1>アド・チェイス：大逃走サバイバル</h1>
         <p>【ルール】<br>
-           広大なサイバー都市を舞台に、あなたをめがけて追尾してくる**「リアルなバナー広告」**から逃げ切れ！<br>
-           主人公の移動速度を超特急（45.0）に引き上げました！軽快に走り回って広告を圧倒しよう！<br>
-           **合計3回捕まえるとゲームオーバーです！**</p>
+           多様な形状の遮蔽物（ビル・壁・タワー）が立ち並ぶ都市を舞台に、<br>
+           <strong style="color: #00ffcc;">🌐 四方八方の様々な方向から包囲してくる「バナー広告」から逃げ切れ！</strong><br>
+           <strong style="color: #ffcc00;">⏱️ 時間経過とともに追跡広告の数がどんどん増加！合計3回捕まえるとゲームオーバー！</strong></p>
         <button class="btn" onclick="startGame()">逃走開始</button>
     </div>
 
@@ -250,16 +251,15 @@
         let animationFrameId = null;
 
         let moveForward = false, moveBackward = false, moveLeft = false, moveRight = false;
-        let velocity = new THREE.Vector3();
-        let direction = new THREE.Vector3();
         let prevTime = performance.now();
 
-        let euler = new THREE.Euler(0, 0, 0, 'YXZ');
-        const PI_2 = Math.PI / 2;
+        let rotationY = 0;
 
         let chasingAds = [];
+        let buildings = []; 
         let missionCounter = 0;
         let activeAdIndex = null;
+        let lastSpawnCheckTime = 0;
 
         // 広告テクスチャの生成
         const adImageUrls = [
@@ -329,60 +329,126 @@
         }
 
         function buildOpenWorldCity() {
-            // 広大な床（150m x 150m）
-            const floorGeo = new THREE.PlaneGeometry(150, 150);
+            // 広大な床（160m x 160m）
+            const floorGeo = new THREE.PlaneGeometry(160, 160);
             const floorMat = new THREE.MeshStandardMaterial({ color: 0x0a0a14, roughness: 0.9 });
             const floor = new THREE.Mesh(floorGeo, floorMat);
             floor.rotation.x = -Math.PI / 2;
             scene.add(floor);
 
-            // ビル群
-            for (let i = 0; i < 25; i++) {
-                let w = 6 + Math.random() * 8;
-                let h = 10 + Math.random() * 20;
-                let d = 6 + Math.random() * 8;
+            buildings = [];
+            // 様々な形状の遮蔽物（タワー、壁、ブロック、ビル）を生成
+            const types = ['tower', 'wallX', 'wallZ', 'box', 'pillar'];
+
+            for (let i = 0; i < 30; i++) {
+                let type = types[Math.floor(Math.random() * types.length)];
+                let w = 4, h = 12, d = 4;
+                let color = 0x112233;
+
+                if (type === 'tower') {
+                    w = 3 + Math.random() * 3;
+                    d = 3 + Math.random() * 3;
+                    h = 18 + Math.random() * 12;
+                    color = 0x1b2b44;
+                } else if (type === 'wallX') {
+                    w = 12 + Math.random() * 10;
+                    d = 2 + Math.random() * 2;
+                    h = 8 + Math.random() * 8;
+                    color = 0x0f1b2d;
+                } else if (type === 'wallZ') {
+                    w = 2 + Math.random() * 2;
+                    d = 12 + Math.random() * 10;
+                    h = 8 + Math.random() * 8;
+                    color = 0x0f1b2d;
+                } else if (type === 'box') {
+                    w = 7 + Math.random() * 6;
+                    d = 7 + Math.random() * 6;
+                    h = 6 + Math.random() * 6;
+                    color = 0x182438;
+                } else if (type === 'pillar') {
+                    w = 2.5;
+                    d = 2.5;
+                    h = 15;
+                    color = 0x223344;
+                }
+
                 let bGeo = new THREE.BoxGeometry(w, h, d);
-                let bMat = new THREE.MeshStandardMaterial({ color: 0x112233, roughness: 0.7 });
+                let bMat = new THREE.MeshStandardMaterial({ color: color, roughness: 0.7 });
                 let building = new THREE.Mesh(bGeo, bMat);
 
-                let x = (Math.random() - 0.5) * 120;
-                let z = (Math.random() - 0.5) * 120;
-                if (Math.abs(x) < 15 && Math.abs(z) < 15) continue;
+                let x = (Math.random() - 0.5) * 130;
+                let z = (Math.random() - 0.5) * 130;
+                if (Math.abs(x) < 18 && Math.abs(z) < 18) continue; // スタート地点付近は空ける
 
                 building.position.set(x, h / 2, z);
                 scene.add(building);
-            }
-        }
 
-        function spawnChasingAds() {
-            chasingAds.forEach(a => scene.remove(a.mesh));
-            chasingAds = [];
-
-            for (let i = 0; i < 4; i++) {
-                let angle = (i / 4) * Math.PI * 2;
-                let dist = 28; 
-                let xPos = Math.cos(angle) * dist;
-                let zPos = Math.sin(angle) * dist;
-                let yPos = 1.7;
-
-                let adInfo = adImageUrls[Math.floor(Math.random() * adImageUrls.length)];
-                let texture = new THREE.CanvasTexture(adInfo.canvas);
-                let adGeo = new THREE.PlaneGeometry(4, 2.4);
-                let adMat = new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide });
-                let adMesh = new THREE.Mesh(adGeo, adMat);
-                adMesh.position.set(xPos, yPos, zPos);
-                scene.add(adMesh);
-
-                chasingAds.push({
-                    mesh: adMesh,
-                    speed: 2.2 + Math.random() * 0.6,
-                    info: adInfo
+                building.geometry.computeBoundingBox();
+                buildings.push({
+                    mesh: building,
+                    width: w,
+                    depth: d,
+                    x: x,
+                    z: z
                 });
             }
         }
 
+        // プレイヤーとビルの衝突判定（AABB）
+        function checkCollision(newX, newZ, radius) {
+            for (let i = 0; i < buildings.length; i++) {
+                let b = buildings[i];
+                let halfW = b.width / 2;
+                let halfD = b.depth / 2;
+
+                let closestX = Math.max(b.x - halfW, Math.min(newX, b.x + halfW));
+                let closestZ = Math.max(b.z - halfD, Math.min(newZ, b.z + halfD));
+
+                let distX = newX - closestX;
+                let distZ = newZ - closestZ;
+                let distanceSq = (distX * distX) + (distZ * distZ);
+
+                if (distanceSq < (radius * radius)) {
+                    return true; 
+                }
+            }
+            return false;
+        }
+
+        function spawnSingleAd() {
+            let angle = Math.random() * Math.PI * 2;
+            let dist = 30 + Math.random() * 20; 
+            let xPos = camera.position.x + Math.cos(angle) * dist;
+            let zPos = camera.position.z + Math.sin(angle) * dist;
+            let yPos = 1.7;
+
+            let adInfo = adImageUrls[Math.floor(Math.random() * adImageUrls.length)];
+            let texture = new THREE.CanvasTexture(adInfo.canvas);
+            let adGeo = new THREE.PlaneGeometry(4, 2.4);
+            let adMat = new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide });
+            let adMesh = new THREE.Mesh(adGeo, adMat);
+            adMesh.position.set(xPos, yPos, zPos);
+            scene.add(adMesh);
+
+            // 広告ごとの個性（回り込みの角度や先回り係数、速度にバラつきを持たせる）
+            chasingAds.push({
+                mesh: adMesh,
+                speed: 3.2 + Math.random() * 1.0, 
+                flankAngle: (Math.random() - 0.5) * 1.8, // 左右に回り込む角度のオフセット
+                flankTimer: Math.random() * 5,
+                info: adInfo
+            });
+        }
+
+        function resetAds() {
+            chasingAds.forEach(a => scene.remove(a.mesh));
+            chasingAds = [];
+            for (let i = 0; i < 4; i++) {
+                spawnSingleAd();
+            }
+        }
+
         function setupInput() {
-            // キーボード操作
             document.addEventListener('keydown', (e) => {
                 if (!gameActive) return;
                 if (e.code === 'KeyW' || e.code === 'ArrowUp') moveForward = true;
@@ -398,32 +464,25 @@
                 if (e.code === 'KeyD' || e.code === 'ArrowRight') moveRight = false;
             });
 
-            // PCマウス視点（ドラッグ操作）
             let isMouseDown = false;
-            let lastMouseX = 0, lastMouseY = 0;
+            let lastMouseX = 0;
 
             document.addEventListener('mousedown', (e) => {
                 if (!gameActive) return;
                 isMouseDown = true;
                 lastMouseX = e.clientX;
-                lastMouseY = e.clientY;
             });
 
             document.addEventListener('mousemove', (e) => {
                 if (!gameActive || !isMouseDown) return;
                 let dx = e.clientX - lastMouseX;
-                let dy = e.clientY - lastMouseY;
-                euler.y -= dx * 0.003;
-                euler.x -= dy * 0.003;
-                euler.x = Math.max(-PI_2, Math.min(PI_2, euler.x));
-                camera.quaternion.setFromEuler(euler);
+                rotationY -= dx * 0.003;
+                camera.rotation.set(0, rotationY, 0, 'YXZ');
                 lastMouseX = e.clientX;
-                lastMouseY = e.clientY;
             });
 
             document.addEventListener('mouseup', () => { isMouseDown = false; });
 
-            // スマホ用バーチャルパッド
             const joyPad = document.getElementById('joy-pad');
             const joyStick = document.getElementById('joy-stick');
             let joyTouchId = null;
@@ -468,25 +527,19 @@
                 moveRight = dx > 10;
             }
 
-            // スマホ画面右側スワイプ視点
             let lookTouchId = null;
-            let lastX = 0, lastY = 0;
+            let lastX = 0;
             document.addEventListener('pointerdown', (e) => {
                 if (!gameActive || e.clientX < window.innerWidth / 2 || e.target.closest('#ad-modal')) return;
                 lookTouchId = e.pointerId;
                 lastX = e.clientX;
-                lastY = e.clientY;
             });
             document.addEventListener('pointermove', (e) => {
                 if (e.pointerId !== lookTouchId || !gameActive) return;
                 let dx = e.clientX - lastX;
-                let dy = e.clientY - lastY;
-                euler.y -= dx * 0.005;
-                euler.x -= dy * 0.005;
-                euler.x = Math.max(-PI_2, Math.min(PI_2, euler.x));
-                camera.quaternion.setFromEuler(euler);
+                rotationY -= dx * 0.005;
+                camera.rotation.set(0, rotationY, 0, 'YXZ');
                 lastX = e.clientX;
-                lastY = e.clientY;
             });
             const endLook = (e) => { if (e.pointerId === lookTouchId) lookTouchId = null; };
             document.addEventListener('pointerup', endLook);
@@ -499,12 +552,15 @@
             hitCount = 0;
             startTime = performance.now();
             prevTime = performance.now();
+            lastSpawnCheckTime = 0;
+            
             camera.position.set(0, 1.7, 0);
-            euler.set(0, 0, 0);
+            rotationY = 0;
+            camera.rotation.set(0, 0, 0);
 
             moveForward = moveBackward = moveLeft = moveRight = false;
 
-            spawnChasingAds();
+            resetAds();
             updateHUD();
             
             if (animationFrameId) cancelAnimationFrame(animationFrameId);
@@ -513,6 +569,7 @@
 
         function updateHUD() {
             document.getElementById('lives').innerText = `広告被弾数: ${hitCount} / 3回`;
+            document.getElementById('ad-count-hud').innerText = `追跡広告数: ${chasingAds.length}体`;
         }
 
         function triggerAdMission(adIndex) {
@@ -561,7 +618,7 @@
             overlay.style.display = 'flex';
             overlay.innerHTML = `
                 <h1 style="color:#ff3333;">💥 広告に3回捕まりました！ 💥</h1>
-                <p>広大な街中を逃げ回りましたが、執拗な広告の連打地獄に追いつかれてしまいました……。<br>生存タイム: ${surviveTime.toFixed(2)}秒</p>
+                <p>多彩な遮蔽物を活用して逃げ回りましたが、最終的に ${chasingAds.length}体 の広告の四方からの包囲網に追いつかれてしまいました……。<br>生存タイム: ${surviveTime.toFixed(2)}秒</p>
                 <button class="btn" onclick="startGame()">もう一度挑戦する</button>
             `;
         }
@@ -577,37 +634,77 @@
             surviveTime = (time - startTime) / 1000;
             document.getElementById('survive-timer').innerText = `生存タイム: ${surviveTime.toFixed(2)}秒`;
 
-            // プレイヤーの移動処理
-            velocity.x -= velocity.x * 10.0 * delta;
-            velocity.z -= velocity.z * 10.0 * delta;
+            if (Math.floor(surviveTime / 15) > lastSpawnCheckTime && chasingAds.length < 12) {
+                lastSpawnCheckTime = Math.floor(surviveTime / 15);
+                spawnSingleAd();
+                updateHUD();
+            }
 
-            direction.z = Number(moveForward) - Number(moveBackward);
-            direction.x = Number(moveRight) - Number(moveLeft);
-            direction.normalize();
+            // プレイヤーの移動計算（スピード約4.5 m/s）
+            const playerSpeed = 4.5;
+            let forwardVal = Number(moveForward) - Number(moveBackward);
+            let sideVal = Number(moveRight) - Number(moveLeft);
 
-            // 【調整】主人公の移動速度を超特急に大幅アップ（26.0 → 45.0）
-            if (moveForward || moveBackward) velocity.z -= direction.z * 45.0 * delta;
-            if (moveLeft || moveRight) velocity.x -= direction.x * 45.0 * delta;
+            if (forwardVal !== 0 || sideVal !== 0) {
+                let dirX = Math.sin(rotationY) * forwardVal + Math.cos(rotationY) * sideVal;
+                let dirZ = Math.cos(rotationY) * forwardVal - Math.sin(rotationY) * sideVal;
+                
+                let len = Math.hypot(dirX, dirZ);
+                if (len > 0) { dirX /= len; dirZ /= len; }
 
-            camera.translateX(-velocity.x * delta);
-            camera.translateZ(-velocity.z * delta);
+                let nextX = camera.position.x + dirX * playerSpeed * delta;
+                let nextZ = camera.position.z + dirZ * playerSpeed * delta;
 
-            // マップの境界制限（150m四方）
-            camera.position.x = Math.max(-70, Math.min(70, camera.position.x));
-            camera.position.z = Math.max(-70, Math.min(70, camera.position.z));
+                const playerRadius = 0.5;
+                if (!checkCollision(nextX, camera.position.z, playerRadius)) {
+                    camera.position.x = Math.max(-75, Math.min(75, nextX));
+                }
+                if (!checkCollision(camera.position.x, nextZ, playerRadius)) {
+                    camera.position.z = Math.max(-75, Math.min(75, nextZ));
+                }
+            }
 
-            // 広告がプレイヤーを追跡
+            camera.position.y = 1.7;
+
+            // 【新機能】多方向から立体的に包囲してくる広告AI
             for (let i = 0; i < chasingAds.length; i++) {
                 let ad = chasingAds[i];
                 let adPos = ad.mesh.position;
+
+                ad.flankTimer += delta;
+                // 定期的に回り込む角度や動きを変化させ、全員が同じ方向から来ないように散らばらせる
+                if (ad.flankTimer > 4.0) {
+                    ad.flankAngle = (Math.random() - 0.5) * 2.2;
+                    ad.flankTimer = 0;
+                }
 
                 let dirX = camera.position.x - adPos.x;
                 let dirZ = camera.position.z - adPos.z;
                 let dist = Math.hypot(dirX, dirZ);
 
                 if (dist > 0.1) {
-                    adPos.x += (dirX / dist) * ad.speed * delta;
-                    adPos.z += (dirZ / dist) * ad.speed * delta;
+                    // 直接追うベクトルに、個別の「回り込みオフセット（角度）」を混ぜて多方向から包囲させる
+                    let baseAngle = Math.atan2(dirZ, dirX);
+                    let targetAngle = baseAngle + ad.flankAngle;
+
+                    let moveDirX = Math.cos(targetAngle);
+                    let moveDirZ = Math.sin(targetAngle);
+
+                    let nextAdX = adPos.x + moveDirX * ad.speed * delta;
+                    let nextAdZ = adPos.z + moveDirZ * ad.speed * delta;
+
+                    // 遮蔽物にぶつかったらスムーズに別方向に滑り込ませる簡易処理
+                    if (!checkCollision(nextAdX, adPos.z, 0.8)) {
+                        adPos.x = nextAdX;
+                    } else {
+                        adPos.x += (dirX / dist) * ad.speed * 0.5 * delta; // 障害物がある時は直進方向で迂回
+                    }
+
+                    if (!checkCollision(adPos.x, nextAdZ, 0.8)) {
+                        adPos.z = nextAdZ;
+                    } else {
+                        adPos.z += (dirZ / dist) * ad.speed * 0.5 * delta;
+                    }
                 }
 
                 ad.mesh.lookAt(camera.position.x, adPos.y, camera.position.z);

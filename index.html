@@ -54,6 +54,7 @@
             font-family: monospace;
             font-size: 13px;
             text-shadow: 0 0 5px #ff0055;
+            pointer-events: auto;
         }
 
         /* 広告強制ポップアップ（ミッション画面） */
@@ -234,8 +235,8 @@
     <div id="overlay">
         <h1>アド・チェイス：大逃走サバイバル</h1>
         <p>【ルール】<br>
-           多様な形状の遮蔽物（ビル・壁・タワー）が立ち並ぶ都市を舞台に、<br>
-           <strong style="color: #00ffcc;">🌐 四方八方の様々な方向から包囲してくる「バナー広告」から逃げ切れ！</strong><br>
+           多彩な形状の遮蔽物（ビル・壁・タワー）が立ち並ぶ都市を舞台に、<br>
+           <strong style="color: #00ffcc;">🌐 広告は遮蔽物を避け、挟まると一旦後退して賢く回り込んで包囲してくる！</strong><br>
            <strong style="color: #ffcc00;">⏱️ 時間経過とともに追跡広告の数がどんどん増加！合計3回捕まえるとゲームオーバー！</strong></p>
         <button class="btn" onclick="startGame()">逃走開始</button>
     </div>
@@ -329,7 +330,6 @@
         }
 
         function buildOpenWorldCity() {
-            // 広大な床（160m x 160m）
             const floorGeo = new THREE.PlaneGeometry(160, 160);
             const floorMat = new THREE.MeshStandardMaterial({ color: 0x0a0a14, roughness: 0.9 });
             const floor = new THREE.Mesh(floorGeo, floorMat);
@@ -337,7 +337,6 @@
             scene.add(floor);
 
             buildings = [];
-            // 様々な形状の遮蔽物（タワー、壁、ブロック、ビル）を生成
             const types = ['tower', 'wallX', 'wallZ', 'box', 'pillar'];
 
             for (let i = 0; i < 30; i++) {
@@ -378,7 +377,7 @@
 
                 let x = (Math.random() - 0.5) * 130;
                 let z = (Math.random() - 0.5) * 130;
-                if (Math.abs(x) < 18 && Math.abs(z) < 18) continue; // スタート地点付近は空ける
+                if (Math.abs(x) < 18 && Math.abs(z) < 18) continue;
 
                 building.position.set(x, h / 2, z);
                 scene.add(building);
@@ -394,7 +393,6 @@
             }
         }
 
-        // プレイヤーとビルの衝突判定（AABB）
         function checkCollision(newX, newZ, radius) {
             for (let i = 0; i < buildings.length; i++) {
                 let b = buildings[i];
@@ -430,12 +428,15 @@
             adMesh.position.set(xPos, yPos, zPos);
             scene.add(adMesh);
 
-            // 広告ごとの個性（回り込みの角度や先回り係数、速度にバラつきを持たせる）
             chasingAds.push({
                 mesh: adMesh,
-                speed: 3.2 + Math.random() * 1.0, 
-                flankAngle: (Math.random() - 0.5) * 1.8, // 左右に回り込む角度のオフセット
-                flankTimer: Math.random() * 5,
+                speed: 3.0 + Math.random() * 0.8, 
+                flankAngle: (Math.random() - 0.5) * 2.0,
+                flankTimer: Math.random() * 4,
+                avoidAngleOffset: 0,
+                stuckTimer: 0, // 挟まった時間を計測するタイマー
+                isBackingUp: false, // 後退中フラグ
+                backupTimer: 0,     // 後退持続時間
                 info: adInfo
             });
         }
@@ -468,7 +469,7 @@
             let lastMouseX = 0;
 
             document.addEventListener('mousedown', (e) => {
-                if (!gameActive) return;
+                if (!gameActive || e.target.closest('.cyber-panel')) return;
                 isMouseDown = true;
                 lastMouseX = e.clientX;
             });
@@ -530,7 +531,7 @@
             let lookTouchId = null;
             let lastX = 0;
             document.addEventListener('pointerdown', (e) => {
-                if (!gameActive || e.clientX < window.innerWidth / 2 || e.target.closest('#ad-modal')) return;
+                if (!gameActive || e.clientX < window.innerWidth / 2 || e.target.closest('#ad-modal') || e.target.closest('.cyber-panel')) return;
                 lookTouchId = e.pointerId;
                 lastX = e.clientX;
             });
@@ -618,7 +619,7 @@
             overlay.style.display = 'flex';
             overlay.innerHTML = `
                 <h1 style="color:#ff3333;">💥 広告に3回捕まりました！ 💥</h1>
-                <p>多彩な遮蔽物を活用して逃げ回りましたが、最終的に ${chasingAds.length}体 の広告の四方からの包囲網に追いつかれてしまいました……。<br>生存タイム: ${surviveTime.toFixed(2)}秒</p>
+                <p>遮蔽物をうまく使って逃げ回りましたが、最終的に ${chasingAds.length}体 の賢い広告包囲網に捕まってしまいました……。<br>生存タイム: ${surviveTime.toFixed(2)}秒</p>
                 <button class="btn" onclick="startGame()">もう一度挑戦する</button>
             `;
         }
@@ -640,7 +641,6 @@
                 updateHUD();
             }
 
-            // プレイヤーの移動計算（スピード約4.5 m/s）
             const playerSpeed = 4.5;
             let forwardVal = Number(moveForward) - Number(moveBackward);
             let sideVal = Number(moveRight) - Number(moveLeft);
@@ -666,44 +666,78 @@
 
             camera.position.y = 1.7;
 
-            // 【新機能】多方向から立体的に包囲してくる広告AI
+            // 【進化版】広告の挟まり自動検知・後退＆脱出AI
             for (let i = 0; i < chasingAds.length; i++) {
                 let ad = chasingAds[i];
                 let adPos = ad.mesh.position;
-
-                ad.flankTimer += delta;
-                // 定期的に回り込む角度や動きを変化させ、全員が同じ方向から来ないように散らばらせる
-                if (ad.flankTimer > 4.0) {
-                    ad.flankAngle = (Math.random() - 0.5) * 2.2;
-                    ad.flankTimer = 0;
-                }
 
                 let dirX = camera.position.x - adPos.x;
                 let dirZ = camera.position.z - adPos.z;
                 let dist = Math.hypot(dirX, dirZ);
 
                 if (dist > 0.1) {
-                    // 直接追うベクトルに、個別の「回り込みオフセット（角度）」を混ぜて多方向から包囲させる
-                    let baseAngle = Math.atan2(dirZ, dirX);
-                    let targetAngle = baseAngle + ad.flankAngle;
+                    let moveDirX = 0;
+                    let moveDirZ = 0;
 
-                    let moveDirX = Math.cos(targetAngle);
-                    let moveDirZ = Math.sin(targetAngle);
+                    // 後退モード中の処理（挟まったら少し後ろへ下がる）
+                    if (ad.isBackingUp) {
+                        ad.backupTimer -= delta;
+                        // プレイヤーとは逆向き（後退方向）に移動
+                        let baseAngle = Math.atan2(dirZ, dirX);
+                        let backAngle = baseAngle + Math.PI + ad.flankAngle;
+                        moveDirX = Math.cos(backAngle);
+                        moveDirZ = Math.sin(backAngle);
+
+                        if (ad.backupTimer <= 0) {
+                            ad.isBackingUp = false;
+                            ad.avoidAngleOffset += (Math.random() - 0.5) * 3.0; // 別の角度へ方向転換
+                        }
+                    } else {
+                        // 通常追跡モード
+                        ad.flankTimer += delta;
+                        if (ad.flankTimer > 3.0) {
+                            ad.flankAngle = (Math.random() - 0.5) * 2.5;
+                            ad.flankTimer = 0;
+                        }
+
+                        let baseAngle = Math.atan2(dirZ, dirX);
+                        let targetAngle = baseAngle + ad.flankAngle + ad.avoidAngleOffset;
+
+                        moveDirX = Math.cos(targetAngle);
+                        moveDirZ = Math.sin(targetAngle);
+                    }
 
                     let nextAdX = adPos.x + moveDirX * ad.speed * delta;
                     let nextAdZ = adPos.z + moveDirZ * ad.speed * delta;
 
-                    // 遮蔽物にぶつかったらスムーズに別方向に滑り込ませる簡易処理
-                    if (!checkCollision(nextAdX, adPos.z, 0.8)) {
+                    const adRadius = 1.0;
+                    let canMoveX = !checkCollision(nextAdX, adPos.z, adRadius);
+                    let canMoveZ = !checkCollision(adPos.x, nextAdZ, adRadius);
+
+                    if (canMoveX) {
                         adPos.x = nextAdX;
+                        ad.avoidAngleOffset *= 0.95;
                     } else {
-                        adPos.x += (dirX / dist) * ad.speed * 0.5 * delta; // 障害物がある時は直進方向で迂回
+                        ad.avoidAngleOffset += 0.8;
                     }
 
-                    if (!checkCollision(adPos.x, nextAdZ, 0.8)) {
+                    if (canMoveZ) {
                         adPos.z = nextAdZ;
+                        ad.avoidAngleOffset *= 0.95;
                     } else {
-                        adPos.z += (dirZ / dist) * ad.speed * 0.5 * delta;
+                        ad.avoidAngleOffset -= 0.8;
+                    }
+
+                    // 💡 【新機能】もし全く動けない（両方向とも障害物に阻まれている）状態が続いたら後退モード発動
+                    if (!canMoveX && !canMoveZ && !ad.isBackingUp) {
+                        ad.stuckTimer += delta;
+                        if (ad.stuckTimer > 0.3) { // 0.3秒間進めなかったら挟まったと判定
+                            ad.isBackingUp = true;
+                            ad.backupTimer = 0.8; // 0.8秒間後ろへ退避
+                            ad.stuckTimer = 0;
+                        }
+                    } else {
+                        ad.stuckTimer = Math.max(0, ad.stuckTimer - delta * 2);
                     }
                 }
 
